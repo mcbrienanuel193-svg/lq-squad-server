@@ -25,7 +25,7 @@
     "statusProxyUrl": "https://lq-squad-status.mcbrienanuel193.workers.dev/",
     "publicStatusUrl": "./public-status.json",
     "publicListUrl": "",
-    "joinNote": "当前对局来自 Squad Wiki 公开服务器列表；GitHub 会定时同步地图、人数和队列。"
+    "joinNote": "当前对局来自 Cloudflare Worker 实时读取的 Squad Wiki 公开服务器列表。"
   },
   "rules": {
     "intro": "进入狼群 L.Q 服务器前，请先确认并遵守以下规则。管理员会根据现场情况进行提醒、警告、踢出或封禁处理。",

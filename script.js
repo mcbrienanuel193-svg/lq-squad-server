@@ -22,10 +22,10 @@ const defaultContent = {
     squadWikiSessionId: "9c93a53f7ac94858a09dfa326cbd7bb2",
     squadWikiServerName: "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩",
     joinProxyUrl: "",
-    statusProxyUrl: "",
+    statusProxyUrl: "https://lq-squad-status.mcbrienanuel193.workers.dev/",
     publicStatusUrl: "./public-status.json",
     publicListUrl: "",
-    joinNote: "当前对局来自公开服务器列表；GitHub 会定时同步地图、人数和队列。",
+    joinNote: "当前对局来自 Cloudflare Worker 实时读取的 Squad Wiki 公开服务器列表。",
   },
   rules: {
     intro: "进入狼群 L.Q 服务器前，请先确认并遵守以下规则。管理员会根据现场情况进行提醒、警告、踢出或封禁处理。",
