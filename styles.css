@@ -2306,8 +2306,8 @@ body.modal-open {
 
 .purchase-dialog {
   position: relative;
-  width: min(1120px, 100%);
-  height: min(760px, calc(100vh - 44px));
+  width: min(820px, 100%);
+  max-height: calc(100dvh - 44px);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
@@ -2351,18 +2351,138 @@ body.modal-open {
   border-color: rgba(90, 198, 255, 0.5);
 }
 
-.purchase-frame-wrap {
+.purchase-body {
   min-height: 0;
   overflow: auto;
-  background: #f4f7fb;
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+  background:
+    linear-gradient(135deg, rgba(77, 217, 255, 0.08), transparent 42%),
+    rgba(3, 8, 14, 0.72);
 }
 
-.purchase-frame-wrap iframe {
+.purchase-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid rgba(180, 208, 240, 0.14);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(7, 13, 22, 0.78);
+}
+
+.purchase-intro strong {
+  color: var(--text);
+  font-size: 20px;
+}
+
+.purchase-intro span {
+  max-width: 470px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.purchase-table {
+  display: grid;
+  gap: 10px;
+}
+
+.purchase-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.78fr) minmax(0, 1.22fr);
+  gap: 12px;
+  align-items: stretch;
+  border: 1px solid rgba(180, 208, 240, 0.16);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(8, 13, 20, 0.9);
+}
+
+.purchase-product {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.purchase-product > span {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(155, 210, 109, 0.36);
+  border-radius: 8px;
+  color: var(--green);
+  background: rgba(155, 210, 109, 0.1);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.purchase-product strong,
+.purchase-product small {
   display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #fff;
+}
+
+.purchase-product strong {
+  color: var(--text);
+  font-size: 24px;
+  line-height: 1.18;
+}
+
+.purchase-product small {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.purchase-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.purchase-option {
+  display: grid;
+  place-items: center;
+  min-height: 86px;
+  border: 1px solid rgba(77, 217, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px;
+  color: var(--text);
+  background: rgba(6, 13, 24, 0.86);
+  text-align: center;
+  text-decoration: none;
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+}
+
+.purchase-option:hover {
+  border-color: rgba(77, 217, 255, 0.56);
+  background: rgba(22, 45, 67, 0.86);
+  transform: translate3d(0, -2px, 0);
+}
+
+.purchase-option strong {
+  display: block;
+  color: #f6fbff;
+  font-size: clamp(26px, 4vw, 38px);
+  line-height: 1;
+}
+
+.purchase-option span {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.purchase-note {
+  margin: 0;
+  color: #f5c983;
+  line-height: 1.7;
 }
 
 .purchase-footer .secondary-button {
@@ -2555,7 +2675,8 @@ body.admin-open {
   }
 
   .purchase-dialog {
-    height: calc(100vh - 20px);
+    width: 100%;
+    max-height: calc(100dvh - 20px);
   }
 
   .purchase-header,
@@ -2576,9 +2697,51 @@ body.admin-open {
     width: 100%;
   }
 
-  .purchase-frame-wrap iframe {
-    width: 980px;
-    min-width: 980px;
+  .purchase-body {
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .purchase-intro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .purchase-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .purchase-product {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .purchase-product > span {
+    width: 48px;
+    font-size: 11px;
+  }
+
+  .purchase-product strong {
+    font-size: 22px;
+  }
+
+  .purchase-options {
+    gap: 7px;
+  }
+
+  .purchase-option {
+    min-height: 72px;
+    padding: 8px 4px;
+  }
+
+  .purchase-option strong {
+    font-size: 26px;
+  }
+
+  .purchase-option span {
+    font-size: 12px;
   }
 
   .join-launch-card {

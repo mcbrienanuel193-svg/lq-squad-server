@@ -8,12 +8,12 @@
     "recruitStatus": "新人开放中"
   },
   "match": {
-    "map": "Gorodok Invasion v2",
-    "mode": "Invasion",
-    "factionA": "美国陆军",
-    "factionB": "俄罗斯陆军",
-    "players": "90 在线",
-    "queue": "0",
+    "map": "同步中",
+    "mode": "同步中",
+    "factionA": "同步中",
+    "factionB": "同步中",
+    "players": "同步中",
+    "queue": "同步中",
     "summary": "当前公开战局进行中，进服前请先确认服务器规则并遵守管理要求，保持公平对局和团队协作。",
     "joinUrl": "./join.html",
     "reserveUrl": "https://www.fyfaka.com/shop/langqunzsxd",
@@ -77,7 +77,7 @@
       "tag": "置顶",
       "date": "2026-06-09",
       "title": "狼群 L.Q 夏季公开战局预约开启",
-      "body": "开放新人体验位、分队预留位和后勤支援报名，参与前请确认服务器规则、地图安排与语音频道",
+      "body": "开放新人体验位、预留位和后勤支援报名，参与前请确认服务器规则、当前地图安排与管理要求",
       "pinned": true
     },
     {
