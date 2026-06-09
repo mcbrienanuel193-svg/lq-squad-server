@@ -1,7 +1,7 @@
 {
   "ok": true,
   "source": "Squad Wiki 公开列表",
-  "generatedAt": "2026-06-09T17:39:50.000Z",
+  "generatedAt": "2026-06-09T18:01:10.236Z",
   "server": {
     "sessionId": "9c93a53f7ac94858a09dfa326cbd7bb2",
     "serverName": "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩",
@@ -9,15 +9,15 @@
     "gameMode": "Invasion",
     "playerCount": 98,
     "maxPlayers": null,
-    "queueCount": 2,
+    "queueCount": 5,
     "isLicensed": true,
     "isCoop": false,
     "region": "ap-east-1"
   },
   "cache": {
-    "updatedAt": "2026-06-09T17:49:18Z",
-    "size": 777,
-    "ageSeconds": 89,
+    "updatedAt": "2026-06-09T17:59:19Z",
+    "size": 787,
+    "ageSeconds": 110,
     "cacheReady": true
   }
 }
