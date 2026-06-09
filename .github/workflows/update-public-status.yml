@@ -1,0 +1,36 @@
+name: Update public Squad status
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Update public status
+        run: node tools/update_public_status.js
+
+      - name: Commit status file
+        run: |
+          if git diff --quiet -- public-status.json; then
+            echo "No public status change."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public-status.json
+          git commit -m "Update public Squad status"
+          git push
