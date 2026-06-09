@@ -2027,19 +2027,26 @@ body::after {
   min-height: 52px;
 }
 
-.join-server-button,
-.reserve-slot-button,
-.rules-button {
+.match-actions .primary-button,
+.match-actions .secondary-button {
   width: 100%;
+  min-width: 0;
   justify-content: center;
   text-align: center;
+  white-space: normal;
+  line-height: 1.25;
 }
 
-.reserve-slot-button,
-.rules-button {
-  min-height: 44px;
+.match-actions .secondary-button {
+  min-height: 58px;
   padding-inline: 12px;
-  font-size: 13px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.join-server-button {
+  font-size: 17px;
+  font-weight: 900;
 }
 
 .live-match-status {
@@ -2384,6 +2391,47 @@ body.modal-open {
   line-height: 1.6;
 }
 
+.purchase-consent {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(245, 201, 131, 0.34);
+  border-radius: 8px;
+  padding: 14px 16px;
+  background:
+    linear-gradient(135deg, rgba(245, 201, 131, 0.12), transparent 46%),
+    rgba(16, 15, 10, 0.78);
+}
+
+.purchase-consent strong {
+  color: #ffe0aa;
+  font-size: 18px;
+}
+
+.purchase-consent ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #d8e5f6;
+  line-height: 1.7;
+}
+
+.purchase-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1.55;
+  cursor: pointer;
+}
+
+.purchase-confirm input {
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  accent-color: var(--cyan);
+  flex: 0 0 auto;
+}
+
 .purchase-table {
   display: grid;
   gap: 10px;
@@ -2462,6 +2510,22 @@ body.modal-open {
   border-color: rgba(77, 217, 255, 0.56);
   background: rgba(22, 45, 67, 0.86);
   transform: translate3d(0, -2px, 0);
+}
+
+.purchase-option.is-disabled,
+.purchase-footer .secondary-button.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  border-color: rgba(180, 208, 240, 0.14);
+  color: rgba(216, 229, 246, 0.72);
+  background: rgba(5, 9, 15, 0.74);
+}
+
+.purchase-option.is-disabled:hover,
+.purchase-footer .secondary-button.is-disabled:hover {
+  border-color: rgba(180, 208, 240, 0.14);
+  background: rgba(5, 9, 15, 0.74);
+  transform: none;
 }
 
 .purchase-option strong {
@@ -2706,6 +2770,14 @@ body.admin-open {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .purchase-consent {
+    padding: 12px;
+  }
+
+  .purchase-confirm {
+    font-size: 14px;
   }
 
   .purchase-row {

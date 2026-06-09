@@ -17,6 +17,7 @@ const defaultContent = {
     summary: "当前公开战局进行中，进服前请先确认服务器规则并遵守管理要求，保持公平对局和团队协作。",
     joinUrl: "./join.html",
     reserveUrl: "https://www.fyfaka.com/shop/langqunzsxd",
+    cdkUrl: "https://sq.przsc.cn/cdk_activate.php",
     rulesUrl: "./rules.html",
     squadWikiUrl: "https://www.squad.wiki/#servers",
     squadWikiSessionId: "9c93a53f7ac94858a09dfa326cbd7bb2",
@@ -158,6 +159,7 @@ function normalizeContent(content) {
       summary: cleanText(match.summary, fallback.match.summary),
       joinUrl: cleanText(match.joinUrl, fallback.match.joinUrl),
       reserveUrl: cleanText(match.reserveUrl, fallback.match.reserveUrl),
+      cdkUrl: cleanText(match.cdkUrl, fallback.match.cdkUrl),
       rulesUrl: cleanText(match.rulesUrl, fallback.match.rulesUrl),
       squadWikiUrl: cleanText(match.squadWikiUrl, fallback.match.squadWikiUrl),
       squadWikiSessionId: cleanText(match.squadWikiSessionId, fallback.match.squadWikiSessionId),
@@ -631,6 +633,10 @@ function applySiteContent(content) {
     node.href = secureExternalUrl(normalized.match.reserveUrl);
   });
 
+  document.querySelectorAll("[data-match-cdk]").forEach((node) => {
+    node.href = secureExternalUrl(normalized.match.cdkUrl);
+  });
+
   document.querySelectorAll("[data-match-rules]").forEach((node) => {
     node.href = normalized.match.rulesUrl;
   });
@@ -1022,7 +1028,7 @@ function renderPurchaseRows() {
             ${item.plans
               .map(
                 (plan) => `
-                  <a class="purchase-option" data-purchase-option="${item.label} ${plan.label} ${plan.price}${plan.suffix}" href="#" target="_blank" rel="noopener">
+                  <a class="purchase-option is-disabled" aria-disabled="true" data-purchase-option="${item.label} ${plan.label} ${plan.price}${plan.suffix}" href="#" target="_blank" rel="noopener">
                     <strong>${plan.price}</strong>
                     <span>${plan.suffix}</span>
                   </a>
@@ -1034,6 +1040,44 @@ function renderPurchaseRows() {
       `
     )
     .join("");
+}
+
+function hasPurchaseConsent(modal) {
+  return Boolean(modal.querySelector("[data-purchase-consent]")?.checked);
+}
+
+function setPurchaseStatus(modal, message) {
+  const status = modal.querySelector("[data-purchase-status]");
+  if (status) {
+    status.textContent = message;
+  }
+}
+
+function updatePurchaseConsentState(modal) {
+  const confirmed = hasPurchaseConsent(modal);
+
+  modal.querySelectorAll("[data-purchase-option], [data-purchase-external]").forEach((control) => {
+    control.classList.toggle("is-disabled", !confirmed);
+    control.setAttribute("aria-disabled", confirmed ? "false" : "true");
+  });
+
+  setPurchaseStatus(
+    modal,
+    confirmed
+      ? "已确认购买须知，现在可以点击价格或打开完整店铺。购买完成后请使用 CDK 兑换入口激活。"
+      : "请先勾选并确认购买须知，确认后才能点击价格或打开完整店铺。"
+  );
+}
+
+function guardPurchaseNavigation(event, modal) {
+  if (hasPurchaseConsent(modal)) {
+    return true;
+  }
+
+  event.preventDefault();
+  setPurchaseStatus(modal, "请先确认：虚拟权益和 CDK 商品购买后不支持退款，确认后才能继续购买。");
+  modal.querySelector("[data-purchase-consent]")?.focus();
+  return false;
 }
 
 function ensurePurchaseModal() {
@@ -1062,15 +1106,28 @@ function ensurePurchaseModal() {
       <div class="purchase-body">
         <div class="purchase-intro">
           <strong>选择项目后跳转飞鱼发卡付款</strong>
-          <span>付款和 CDK 自动发放仍由飞鱼发卡处理，本站只提供清晰的手机端价目表入口。</span>
+          <span>付款和 CDK 自动发放仍由飞鱼发卡处理，购买完成后可使用本站提供的 CDK 兑换入口激活。</span>
+        </div>
+        <div class="purchase-consent">
+          <strong>购买须知</strong>
+          <ul>
+            <li>虚拟权益、预留位和 CDK 商品付款后不支持无理由退款。</li>
+            <li>请确认购买项目、期限、游戏信息和联系方式填写正确，信息错误可能影响发放或激活。</li>
+            <li>CDK 购买完成后请前往兑换入口激活，遇到问题请联系管理处理。</li>
+          </ul>
+          <label class="purchase-confirm">
+            <input type="checkbox" data-purchase-consent />
+            <span>我已阅读并同意以上购买须知，确认后继续购买。</span>
+          </label>
         </div>
         <div class="purchase-table">
           ${renderPurchaseRows()}
         </div>
-        <p class="purchase-note" data-purchase-status>点击价格后会打开飞鱼发卡，请在发卡页面选择对应商品完成付款。</p>
+        <p class="purchase-note" data-purchase-status>请先勾选并确认购买须知，确认后才能点击价格或打开完整店铺。</p>
       </div>
       <footer class="purchase-footer">
-        <a class="secondary-button" data-purchase-external href="#" target="_blank" rel="noopener">打开完整店铺</a>
+        <a class="secondary-button" data-purchase-cdk href="https://sq.przsc.cn/cdk_activate.php" target="_blank" rel="noopener">兑换 CDK</a>
+        <a class="secondary-button is-disabled" aria-disabled="true" data-purchase-external href="#" target="_blank" rel="noopener">打开完整店铺</a>
         <button class="secondary-button" type="button" data-purchase-close>关闭</button>
       </footer>
     </section>
@@ -1081,31 +1138,47 @@ function ensurePurchaseModal() {
     control.addEventListener("click", closePurchaseModal);
   });
 
+  modal.querySelector("[data-purchase-consent]")?.addEventListener("change", () => {
+    updatePurchaseConsentState(modal);
+  });
+
   modal.querySelectorAll("[data-purchase-option]").forEach((control) => {
-    control.addEventListener("click", () => {
-      const status = modal.querySelector("[data-purchase-status]");
-      const option = control.dataset.purchaseOption || "所选商品";
-      if (status) {
-        status.textContent = `已打开飞鱼发卡：${option}。如果没有自动定位，请在发卡页面选择同名商品。`;
+    control.addEventListener("click", (event) => {
+      if (!guardPurchaseNavigation(event, modal)) {
+        return;
       }
+
+      const option = control.dataset.purchaseOption || "所选商品";
+      setPurchaseStatus(modal, `已打开飞鱼发卡：${option}。如果没有自动定位，请在发卡页面选择同名商品。`);
       if (navigator.clipboard) {
         navigator.clipboard.writeText(`我要购买：${option}`).catch(() => undefined);
       }
     });
   });
 
+  modal.querySelector("[data-purchase-external]")?.addEventListener("click", (event) => {
+    guardPurchaseNavigation(event, modal);
+  });
+
   return modal;
 }
 
-function openPurchaseModal(url) {
+function openPurchaseModal(url, cdkUrl = defaultContent.match.cdkUrl) {
   const secureUrl = secureExternalUrl(url);
   const modal = ensurePurchaseModal();
   const external = modal.querySelector("[data-purchase-external]");
+  const cdk = modal.querySelector("[data-purchase-cdk]");
+  const consent = modal.querySelector("[data-purchase-consent]");
 
   external.href = secureUrl;
+  cdk.href = secureExternalUrl(cdkUrl);
+  if (consent) {
+    consent.checked = false;
+  }
   modal.querySelectorAll("[data-purchase-option]").forEach((link) => {
     link.href = secureUrl;
   });
+  updatePurchaseConsentState(modal);
   modal.classList.remove("hidden");
   document.body.classList.add("modal-open");
   modal.querySelector(".purchase-close")?.focus();
@@ -1127,12 +1200,8 @@ function setupReservePurchase(content) {
 
   document.querySelectorAll("[data-match-reserve]").forEach((link) => {
     link.addEventListener("click", (event) => {
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) {
-        return;
-      }
-
       event.preventDefault();
-      openPurchaseModal(link.href || match.reserveUrl);
+      openPurchaseModal(link.href || match.reserveUrl, match.cdkUrl);
     });
   });
 
