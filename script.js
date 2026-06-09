@@ -23,7 +23,9 @@ const defaultContent = {
     squadWikiServerName: "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩",
     joinProxyUrl: "",
     statusProxyUrl: "",
-    joinNote: "当前显示最近一次记录；接入 RCON 状态接口后会自动同步地图、人数和队列。",
+    publicStatusUrl: "./public-status.json",
+    publicListUrl: "",
+    joinNote: "当前对局来自公开服务器列表；GitHub 会定时同步地图、人数和队列。",
   },
   rules: {
     intro: "进入狼群 L.Q 服务器前，请先确认并遵守以下规则。管理员会根据现场情况进行提醒、警告、踢出或封禁处理。",
@@ -162,6 +164,8 @@ function normalizeContent(content) {
       squadWikiServerName: cleanText(match.squadWikiServerName, fallback.match.squadWikiServerName),
       joinProxyUrl: cleanText(match.joinProxyUrl, fallback.match.joinProxyUrl),
       statusProxyUrl: cleanText(match.statusProxyUrl, fallback.match.statusProxyUrl),
+      publicStatusUrl: cleanText(match.publicStatusUrl, fallback.match.publicStatusUrl),
+      publicListUrl: cleanText(match.publicListUrl, fallback.match.publicListUrl),
       joinNote: cleanText(match.joinNote, fallback.match.joinNote),
     },
     rules: {
@@ -312,6 +316,88 @@ function deriveStatusProxyUrl(match) {
   }
 }
 
+function hasLiveStatusSource(match) {
+  return Boolean(deriveStatusProxyUrl(match) || match.publicStatusUrl || match.publicListUrl);
+}
+
+function getPublicStatusUrls(match) {
+  return [match.publicStatusUrl, match.publicListUrl].map((url) => cleanText(url)).filter(Boolean);
+}
+
+function getServerSearchHints(match) {
+  const configured = cleanText(match.squadWikiServerName);
+  const hints = ["狼群", "L.Q", "LQ"];
+
+  configured
+    .split(/[\s=|｜#【】\[\]（）()]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 2 && !/^\d+$/.test(part))
+    .forEach((part) => hints.push(part));
+
+  return [...new Set(hints)];
+}
+
+function publicServerMatches(server, match) {
+  if (!server || typeof server !== "object") {
+    return false;
+  }
+
+  const sessionId = cleanText(firstValue(server.sessionId, server.serverID, server.serverId, server.id));
+  if (match.squadWikiSessionId && sessionId === match.squadWikiSessionId) {
+    return true;
+  }
+
+  const serverName = cleanText(firstValue(server.serverName, server.name, server.hostname));
+  if (!serverName) {
+    return false;
+  }
+
+  if (match.squadWikiServerName && serverName === match.squadWikiServerName) {
+    return true;
+  }
+
+  return getServerSearchHints(match).some((hint) => serverName.includes(hint));
+}
+
+function getPublicServers(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+  return firstValue(data?.servers, data?.data?.servers, data?.data, data?.results, []);
+}
+
+function normalizePublicStatusPayload(data, match) {
+  const direct = normalizeLiveServerPayload(data);
+  if (direct && (direct.map || direct.gameMode || Number.isFinite(direct.playerCount))) {
+    direct.source = direct.source === "RCON" ? "公开服务器列表" : direct.source;
+    return direct;
+  }
+
+  const servers = getPublicServers(data);
+  if (!Array.isArray(servers)) {
+    return null;
+  }
+
+  const found = servers.find((server) => publicServerMatches(server, match));
+  if (!found) {
+    return null;
+  }
+
+  return normalizeLiveServerPayload({
+    server: found,
+    source: cleanText(firstValue(data?.source, "Squad Wiki 公开列表")),
+  });
+}
+
+function addMatchQueryParams(url, match) {
+  if (match.squadWikiSessionId && !url.searchParams.has("serverID")) {
+    url.searchParams.set("serverID", match.squadWikiSessionId);
+  }
+  if (match.squadWikiServerName && !url.searchParams.has("serverName")) {
+    url.searchParams.set("serverName", match.squadWikiServerName);
+  }
+}
+
 function setLiveMatchStatus(message, state = "info") {
   document.querySelectorAll("[data-live-match-status]").forEach((node) => {
     node.textContent = message;
@@ -364,39 +450,45 @@ function applyLiveMatchServer(server, cache) {
 }
 
 async function refreshLiveMatchStatus(match) {
-  const statusUrl = deriveStatusProxyUrl(match);
-  if (!statusUrl) {
-    setLiveMatchStatus("当前显示最近一次记录；接入 RCON 状态接口后会自动实时同步。", "warn");
+  if (!hasLiveStatusSource(match)) {
+    setLiveMatchStatus("当前显示最近一次记录；配置公开状态源后会自动同步。", "warn");
     return false;
   }
 
-  const url = new URL(statusUrl, window.location.href);
-  if (match.squadWikiSessionId && !url.searchParams.has("serverID")) {
-    url.searchParams.set("serverID", match.squadWikiSessionId);
-  }
-  if (match.squadWikiServerName && !url.searchParams.has("serverName")) {
-    url.searchParams.set("serverName", match.squadWikiServerName);
-  }
+  const sources = [
+    { url: deriveStatusProxyUrl(match), type: "status" },
+    ...getPublicStatusUrls(match).map((url) => ({ url, type: "public" })),
+  ].filter((source) => source.url);
 
-  try {
-    const response = await fetch(url.href, { cache: "no-store" });
-    const data = await response.json().catch(() => ({}));
+  for (const source of sources) {
+    try {
+      const url = new URL(source.url, window.location.href);
+      if (source.type === "status") {
+        addMatchQueryParams(url, match);
+      }
 
-    if (!response.ok || data.ok === false) {
-      throw new Error(data.error || "实时状态读取失败");
+      const response = await fetch(url.href, { cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error || "实时状态读取失败");
+      }
+
+      const server =
+        source.type === "status" ? normalizeLiveServerPayload(data) : normalizePublicStatusPayload(data, match);
+      if (!server) {
+        throw new Error("实时状态格式不正确");
+      }
+
+      applyLiveMatchServer(server, data.cache || null);
+      return true;
+    } catch {
+      continue;
     }
-
-    const server = normalizeLiveServerPayload(data);
-    if (!server) {
-      throw new Error("实时状态格式不正确");
-    }
-
-    applyLiveMatchServer(server, data.cache || null);
-    return true;
-  } catch {
-    setLiveMatchStatus("实时状态暂时不可用，当前显示最近一次记录。", "error");
-    return false;
   }
+
+  setLiveMatchStatus("公开服务器列表暂时不可用，当前显示最近一次记录。", "error");
+  return false;
 }
 
 function appendText(parent, tagName, text) {
@@ -819,7 +911,7 @@ function setupLiveMatchStatus(content) {
   const match = normalizeContent(content).match;
   refreshLiveMatchStatus(match);
 
-  if (deriveStatusProxyUrl(match)) {
+  if (hasLiveStatusSource(match)) {
     window.setInterval(() => {
       refreshLiveMatchStatus(match);
     }, 60 * 1000);

@@ -24,7 +24,9 @@ const defaultContent = {
     squadWikiServerName: "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩",
     joinProxyUrl: "",
     statusProxyUrl: "",
-    joinNote: "当前显示最近一次记录；接入 RCON 状态接口后会自动同步地图、人数和队列。",
+    publicStatusUrl: "./public-status.json",
+    publicListUrl: "",
+    joinNote: "当前对局来自公开服务器列表；GitHub 会定时同步地图、人数和队列。",
   },
   rules: {
     intro: "进入狼群 L.Q 服务器前，请先确认并遵守以下规则。管理员会根据现场情况进行提醒、警告、踢出或封禁处理。",
@@ -226,6 +228,8 @@ function normalizeContent(content) {
       squadWikiServerName: cleanText(match.squadWikiServerName) || fallback.match.squadWikiServerName,
       joinProxyUrl: cleanText(match.joinProxyUrl) || fallback.match.joinProxyUrl,
       statusProxyUrl: cleanText(match.statusProxyUrl) || fallback.match.statusProxyUrl,
+      publicStatusUrl: cleanText(match.publicStatusUrl) || fallback.match.publicStatusUrl,
+      publicListUrl: cleanText(match.publicListUrl) || fallback.match.publicListUrl,
       joinNote: cleanText(match.joinNote) || fallback.match.joinNote,
     },
     rules: {

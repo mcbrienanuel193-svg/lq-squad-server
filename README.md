@@ -14,6 +14,9 @@
 - `admin.js`: 首页内置后台、读取、编辑、导出和发布逻辑
 - `assets/lq-avatar.png`: 服务器头像和 favicon
 - `workers/squad-wiki-join-worker.js`: 可部署到 Cloudflare Workers 的进服代理
+- `public-status.json`: 当前对局公开状态，前端会优先读取这个文件
+- `tools/update_public_status.js`: 从 Squad Wiki 公开服务器列表生成 `public-status.json`
+- `.github/workflows/update-public-status.yml`: GitHub Actions 定时更新当前对局
 
 页面已包含首屏入场、滚动显现、按钮点击波纹、移动端菜单滑动、卡片悬停和招募面板扫描动效 系统开启“减少动态效果”时会自动降低动画
 
@@ -45,7 +48,15 @@ Squad Wiki: https://www.squad.wiki/#servers
 服务器名: 【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩
 ```
 
-实时地图、模式、在线人数和排队人数建议接入你自己的 RCON HTTP 状态接口。把接口地址填到后台的“RCON 状态接口地址”或 `content.json` 的 `match.statusProxyUrl`。
+## 当前对局自动更新
+
+当前版本默认使用第二种方案：从 Squad Wiki 公开服务器列表读取狼群服务器，再生成同目录的 `public-status.json`。前端读取同源文件，不会遇到 GitHub Pages 跨域限制，也不会暴露 RCON 密码。
+
+上传到 GitHub 后，到仓库的 `Actions` 页面打开工作流权限，然后手动运行一次 `Update public Squad status`。之后 GitHub 会每 5 分钟自动检查一次；只有地图、人数、队列等内容变化时才会提交更新。
+
+如果你以后有 Cloudflare Worker 或自己的 HTTPS 状态接口，可以把接口地址填到后台的“RCON 状态接口地址”或 `content.json` 的 `match.statusProxyUrl`，前端会优先读这个接口，失败后再读 `public-status.json`。
+
+## 可选 RCON 状态接口
 
 本仓库已提供一个可运行的 RCON 状态服务：
 
