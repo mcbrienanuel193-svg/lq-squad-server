@@ -1,3 +1,4 @@
+(() => {
 const defaultContent = {
   site: {
     qq: "907522575",
@@ -57,10 +58,15 @@ const statusNode = document.querySelector("#adminStatus");
 const loginStatusNode = document.querySelector("#loginStatus");
 const loginPanel = document.querySelector("#adminLogin");
 const adminApp = document.querySelector("#adminApp");
+const adminOverlay = document.querySelector("#adminOverlay");
 const announcementList = document.querySelector("#announcementList");
 const sponsorList = document.querySelector("#sponsorList");
 const applicationList = document.querySelector("#applicationList");
 let currentSha = "";
+
+if (!loginPanel || !adminApp || !statusNode || !loginStatusNode) {
+  return;
+}
 
 function cloneContent(content) {
   return JSON.parse(JSON.stringify(content));
@@ -74,6 +80,22 @@ function setStatus(message, state = "") {
 function setLoginStatus(message, state = "") {
   loginStatusNode.textContent = message;
   loginStatusNode.dataset.state = state;
+}
+
+function openAdmin() {
+  if (adminOverlay) {
+    adminOverlay.classList.remove("hidden");
+    adminOverlay.setAttribute("aria-hidden", "false");
+    document.body.classList.add("admin-open");
+  }
+}
+
+function closeAdmin() {
+  if (adminOverlay) {
+    adminOverlay.classList.add("hidden");
+    adminOverlay.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("admin-open");
+  }
 }
 
 function cleanText(value) {
@@ -510,7 +532,7 @@ function downloadContent() {
   URL.revokeObjectURL(link.href);
 }
 
-document.querySelector("#loadRemote").addEventListener("click", async () => {
+document.querySelector("#loadRemote")?.addEventListener("click", async () => {
   try {
     setStatus("正在读取", "busy");
     renderForm(await readRemoteContent());
@@ -520,7 +542,7 @@ document.querySelector("#loadRemote").addEventListener("click", async () => {
   }
 });
 
-document.querySelector("#publishRemote").addEventListener("click", async () => {
+document.querySelector("#publishRemote")?.addEventListener("click", async () => {
   try {
     setStatus("正在发布", "busy");
     await publishRemoteContent();
@@ -530,9 +552,9 @@ document.querySelector("#publishRemote").addEventListener("click", async () => {
   }
 });
 
-document.querySelector("#downloadJson").addEventListener("click", downloadContent);
+document.querySelector("#downloadJson")?.addEventListener("click", downloadContent);
 
-document.querySelector("#addAnnouncement").addEventListener("click", () => {
+document.querySelector("#addAnnouncement")?.addEventListener("click", () => {
   const content = collectContent();
   content.announcements.unshift({
     tag: "公告",
@@ -544,7 +566,7 @@ document.querySelector("#addAnnouncement").addEventListener("click", () => {
   renderAnnouncements(content.announcements);
 });
 
-document.querySelector("#addSponsor").addEventListener("click", () => {
+document.querySelector("#addSponsor")?.addEventListener("click", () => {
   const content = collectContent();
   content.sponsors.push({
     type: "活动赞助",
@@ -557,12 +579,28 @@ document.querySelector("#addSponsor").addEventListener("click", () => {
 applySettings();
 loadLocalContent();
 setupAdminTabs();
-document.querySelector("#loginAdmin").addEventListener("click", loginAdmin);
-document.querySelector("#logoutAdmin").addEventListener("click", logoutAdmin);
-document.querySelector("#exportApplications").addEventListener("click", exportApplications);
-document.querySelector("#clearApplications").addEventListener("click", clearApplications);
+document.querySelector("#loginAdmin")?.addEventListener("click", loginAdmin);
+document.querySelector("#logoutAdmin")?.addEventListener("click", logoutAdmin);
+document.querySelector("#exportApplications")?.addEventListener("click", exportApplications);
+document.querySelector("#clearApplications")?.addEventListener("click", clearApplications);
+document.querySelectorAll("[data-admin-open]").forEach((button) => {
+  button.addEventListener("click", () => {
+    openAdmin();
+    document.querySelector(".mobile-menu")?.classList.remove("open");
+    document.querySelector(".menu-button")?.setAttribute("aria-expanded", "false");
+  });
+});
+document.querySelectorAll("[data-admin-close]").forEach((button) => {
+  button.addEventListener("click", closeAdmin);
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !adminOverlay?.classList.contains("hidden")) {
+    closeAdmin();
+  }
+});
 
 const savedToken = sessionStorage.getItem(tokenSessionKey);
 if (savedToken) {
   unlockAdmin(savedToken);
 }
+})();

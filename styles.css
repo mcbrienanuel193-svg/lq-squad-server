@@ -281,24 +281,29 @@ button {
   font-size: 14px;
 }
 
-.site-nav a {
+.site-nav a,
+.nav-admin-button {
   position: relative;
   min-height: 38px;
   padding: 10px 13px;
   border: 1px solid transparent;
   border-radius: 6px;
+  color: inherit;
+  background: transparent;
   transition: color 0.28s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.28s ease, background 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .site-nav a:hover,
-.site-nav a.active {
+.site-nav a.active,
+.nav-admin-button:hover {
   border-color: rgba(155, 210, 109, 0.34);
   color: var(--green);
   background: rgba(155, 210, 109, 0.1);
   transform: translateY(-1px);
 }
 
-.site-nav a::after {
+.site-nav a::after,
+.nav-admin-button::after {
   position: absolute;
   right: 10px;
   bottom: 5px;
@@ -313,7 +318,8 @@ button {
 }
 
 .site-nav a:hover::after,
-.site-nav a.active::after {
+.site-nav a.active::after,
+.nav-admin-button:hover::after {
   opacity: 1;
   transform: scaleX(1);
 }
@@ -401,22 +407,29 @@ button {
   transform: translateY(0) scale(1);
 }
 
-.mobile-menu a {
+.mobile-menu a,
+.mobile-admin-button {
   display: block;
+  width: 100%;
   min-height: 46px;
   padding: 14px 16px;
+  border: 0;
   border-bottom: 1px solid var(--line-soft);
   color: #d8e5f6;
+  text-align: left;
+  background: transparent;
   transition: color 0.2s ease, background 0.2s ease, padding-left 0.2s ease;
 }
 
-.mobile-menu a:hover {
+.mobile-menu a:hover,
+.mobile-admin-button:hover {
   padding-left: 22px;
   color: var(--green);
   background: rgba(155, 210, 109, 0.1);
 }
 
-.mobile-menu a:last-child {
+.mobile-menu a:last-child,
+.mobile-admin-button:last-child {
   border-bottom: 0;
 }
 
@@ -1599,13 +1612,16 @@ body::after {
 
 .site-nav a:hover,
 .site-nav a.active,
-.mobile-menu a:hover {
+.nav-admin-button:hover,
+.mobile-menu a:hover,
+.mobile-admin-button:hover {
   border-color: rgba(77, 217, 255, 0.36);
   color: var(--cyan);
   background: rgba(29, 120, 255, 0.12);
 }
 
-.site-nav a::after {
+.site-nav a::after,
+.nav-admin-button::after {
   background: var(--cyan);
 }
 
@@ -1940,6 +1956,77 @@ body::after {
   color: var(--cyan);
   font-size: 12px;
   font-weight: 800;
+}
+
+.site-footer button {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+
+.site-footer button:hover {
+  color: var(--cyan);
+}
+
+.admin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  overflow-y: auto;
+  padding: 26px 16px;
+  background:
+    linear-gradient(rgba(30, 120, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(77, 217, 255, 0.06) 1px, transparent 1px),
+    rgba(3, 6, 10, 0.92);
+  background-size: 54px 54px, 54px 54px, auto;
+  backdrop-filter: blur(18px);
+}
+
+body.admin-open {
+  overflow: hidden;
+}
+
+.admin-dock {
+  position: relative;
+  width: min(1180px, 100%);
+  min-height: calc(100svh - 52px);
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(5, 7, 10, 0.94);
+  box-shadow: 0 32px 110px rgba(0, 0, 0, 0.7);
+}
+
+.admin-close {
+  position: sticky;
+  top: 14px;
+  z-index: 3;
+  float: right;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--cyan);
+  background: rgba(8, 13, 20, 0.9);
+}
+
+.admin-close:hover {
+  border-color: rgba(77, 217, 255, 0.7);
+  background: rgba(29, 120, 255, 0.16);
+}
+
+.admin-overlay .admin-login {
+  min-height: calc(100svh - 80px);
+}
+
+.admin-overlay .admin-header,
+.admin-overlay .admin-shell {
+  width: min(1080px, calc(100% - 32px));
 }
 
 @media (max-width: 960px) {
