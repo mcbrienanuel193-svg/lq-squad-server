@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260610-rcon-status" />
     <title>狼群 L.Q 官网后台</title>
   </head>
   <body class="admin-page">
@@ -90,6 +90,82 @@
           <section class="admin-panel">
             <div class="admin-panel-title">
               <div>
+                <p class="eyebrow">Live Match</p>
+                <h2>当前对局</h2>
+              </div>
+            </div>
+
+            <div class="admin-grid">
+              <label>
+                地图
+                <input data-match-field="map" type="text" />
+              </label>
+              <label>
+                模式
+                <input data-match-field="mode" type="text" />
+              </label>
+              <label>
+                阵营一
+                <input data-match-field="factionA" type="text" />
+              </label>
+              <label>
+                阵营二
+                <input data-match-field="factionB" type="text" />
+              </label>
+              <label>
+                在线人数
+                <input data-match-field="players" type="text" />
+              </label>
+              <label>
+                排队人数
+                <input data-match-field="queue" type="text" />
+              </label>
+              <label class="wide-field">
+                加入服务器链接
+                <input data-match-field="joinUrl" type="url" />
+              </label>
+              <label class="wide-field">
+                预留位购买链接
+                <input data-match-field="reserveUrl" type="url" />
+              </label>
+              <label class="wide-field">
+                规则页面链接
+                <input data-match-field="rulesUrl" type="text" />
+              </label>
+              <label class="wide-field">
+                Squad Wiki 页面
+                <input data-match-field="squadWikiUrl" type="url" />
+              </label>
+              <label class="wide-field">
+                Squad Wiki Session ID
+                <input data-match-field="squadWikiSessionId" type="text" />
+              </label>
+              <label class="wide-field">
+                Squad Wiki 服务器全名
+                <textarea data-match-field="squadWikiServerName" rows="2"></textarea>
+              </label>
+              <label class="wide-field">
+                实时进服代理地址（保留备用）
+                <input data-match-field="joinProxyUrl" type="url" placeholder="例如 https://xxx.workers.dev/join" />
+              </label>
+              <label class="wide-field">
+                RCON 状态接口地址
+                <input data-match-field="statusProxyUrl" type="url" placeholder="填写你的 RCON 状态 HTTP 接口，例如 https://api.example.com/status" />
+              </label>
+              <label class="wide-field">
+                对局说明
+                <textarea data-match-field="summary" rows="3"></textarea>
+              </label>
+              <label class="wide-field">
+                按钮提示
+                <textarea data-match-field="joinNote" rows="2"></textarea>
+              </label>
+            </div>
+          </section>
+
+          <section class="admin-panel">
+            <div class="admin-panel-title">
+              <div>
                 <p class="eyebrow">Announcements</p>
                 <h2>公告内容</h2>
               </div>
@@ -163,6 +239,7 @@
       </main>
     </div>
 
-    <script src="./admin.js"></script>
+    <script src="./admin.js?v=20260610-rcon-status"></script>
   </body>
 </html>
+

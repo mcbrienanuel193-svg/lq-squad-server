@@ -1,0 +1,122 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="狼群 L.Q Squad 服务器实时进服入口" />
+    <link rel="icon" type="image/png" href="./assets/lq-avatar.png" />
+    <link rel="stylesheet" href="./styles.css?v=20260610-rcon-status" />
+    <title>狼群 L.Q Squad Wiki 进服</title>
+  </head>
+  <body class="rules-page join-launch-page">
+    <header class="site-header" data-elevated="false">
+      <a class="brand" href="./index.html#home" aria-label="狼群 L.Q 首页">
+        <img src="./assets/lq-avatar.png" alt="" />
+        <span>
+          <strong>狼群 L.Q</strong>
+          <small>战术小队 Squad 服务器</small>
+        </span>
+      </a>
+
+      <nav class="site-nav" aria-label="主导航">
+        <a href="./index.html#status">战备</a>
+        <a href="./index.html#match">对局</a>
+        <a href="./rules.html">规则</a>
+        <a href="./index.html#join">加入</a>
+      </nav>
+
+      <div class="header-actions">
+        <a class="icon-button" data-qq-link href="https://qm.qq.com/q/JWGSe4YnGm" target="_blank" rel="noopener" title="进入QQ群" aria-label="进入QQ群">
+          <span aria-hidden="true">Q</span>
+        </a>
+        <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobileMenu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="mobile-menu" id="mobileMenu" aria-label="移动端导航">
+      <a href="./index.html#status">战备</a>
+      <a href="./index.html#match">对局</a>
+      <a href="./rules.html">规则</a>
+      <a href="./index.html#join">加入</a>
+    </nav>
+
+    <main>
+      <section class="section rules-hero join-launch-hero">
+        <p class="eyebrow">Squad Wiki Join</p>
+        <h1>进服入口</h1>
+        <p>点击后会跳转到 Squad Wiki 对应服务器页面，在页面内使用一键加入。</p>
+      </section>
+
+      <section class="section join-launch-shell" aria-label="实时进服入口">
+        <div class="join-launch-card">
+          <div class="join-launch-title">
+            <p class="eyebrow">Matched Server</p>
+            <h2 data-join-server-name>【L.Q】狼群#1</h2>
+          </div>
+
+          <div class="join-detail-grid">
+            <article>
+              <span>地图</span>
+              <strong data-match="map">Gorodok Invasion v2</strong>
+            </article>
+            <article>
+              <span>模式</span>
+              <strong data-match="mode">Invasion</strong>
+            </article>
+            <article>
+              <span>阵营一</span>
+              <strong data-match="factionA">美国陆军</strong>
+            </article>
+            <article>
+              <span>阵营二</span>
+              <strong data-match="factionB">俄罗斯陆军</strong>
+            </article>
+            <article>
+              <span>在线</span>
+              <strong data-match="players">90 在线</strong>
+            </article>
+            <article>
+              <span>排队</span>
+              <strong data-match="queue">0</strong>
+            </article>
+          </div>
+
+          <div class="join-status-panel" data-state="warn" data-join-launch-status>
+            点击后会跳转到 Squad Wiki 对应服务器页面，在页面内使用一键加入。
+          </div>
+          <small class="live-match-status" data-live-match-status>当前显示最近一次记录；接入 RCON 状态接口后会自动实时同步。</small>
+
+          <div class="match-actions join-launch-actions">
+            <button class="primary-button join-server-button" type="button" data-dynamic-join>
+              打开 Squad Wiki 进服
+              <span aria-hidden="true">&gt;</span>
+            </button>
+            <a class="secondary-button reserve-slot-button" data-match-reserve href="https://www.fyfaka.com/shop/langqunzsxd" target="_blank" rel="noopener">
+              购买预留位
+            </a>
+            <a class="secondary-button rules-button" data-match-rules href="./rules.html">
+              查看规则
+            </a>
+          </div>
+
+          <small class="join-session-line">
+            Session ID:
+            <code data-join-session-id>9c93a53f7ac94858a09dfa326cbd7bb2</code>
+          </small>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <strong>狼群 L.Q</strong>
+      <p><a href="./index.html#match">返回当前对局</a></p>
+    </footer>
+
+    <script src="./script.js?v=20260610-rcon-status"></script>
+  </body>
+</html>
+

@@ -8,6 +8,69 @@ const defaultContent = {
     voiceLink: "https://kook.vip/azTBqj",
     recruitStatus: "新人开放中",
   },
+  match: {
+    map: "Gorodok Invasion v2",
+    mode: "Invasion",
+    factionA: "美国陆军",
+    factionB: "俄罗斯陆军",
+    players: "90 在线",
+    queue: "0",
+    summary: "当前公开战局进行中，进服前请先确认服务器规则并遵守管理要求，保持公平对局和团队协作。",
+    joinUrl: "./join.html",
+    reserveUrl: "https://www.fyfaka.com/shop/langqunzsxd",
+    rulesUrl: "./rules.html",
+    squadWikiUrl: "https://www.squad.wiki/#servers",
+    squadWikiSessionId: "9c93a53f7ac94858a09dfa326cbd7bb2",
+    squadWikiServerName: "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩",
+    joinProxyUrl: "",
+    statusProxyUrl: "",
+    joinNote: "当前显示最近一次记录；接入 RCON 状态接口后会自动同步地图、人数和队列。",
+  },
+  rules: {
+    intro: "进入狼群 L.Q 服务器前，请先确认并遵守以下规则。管理员会根据现场情况进行提醒、警告、踢出或封禁处理。",
+    footerNote: "规则会根据服务器运营情况调整，最终解释以狼群 L.Q 管理组公告为准。",
+    categories: [
+      {
+        title: "基础纪律",
+        items: [
+          "禁止辱骂、人身攻击、歧视、恶意挑衅、刷屏或发布无关广告。",
+          "禁止使用外挂、脚本、漏洞、屏幕准星、透视等破坏公平的工具。",
+          "进入服务器默认同意管理员依据规则进行管理。",
+        ],
+      },
+      {
+        title: "语音与沟通",
+        items: [
+          "保持语音频道清晰，战斗中优先传递关键情报。",
+          "禁止长时间噪音、音乐外放、抢麦或故意干扰指挥。",
+          "发生争议时先服从现场管理，赛后再提交截图或录像复核。",
+        ],
+      },
+      {
+        title: "小队与指挥",
+        items: [
+          "加入小队后请服从队长和管理员的岗位安排。",
+          "禁止恶意锁队、占位、挂机、拒不配合团队目标或故意破坏战局。",
+          "新人可以主动说明经验情况，队长应尽量安排可执行岗位。",
+        ],
+      },
+      {
+        title: "载具与资源",
+        items: [
+          "载具需按团队需求使用，禁止无故浪费、单人开走关键载具或恶意自毁。",
+          "补给车、工事建设、火力支援和资源点应服从团队整体安排。",
+          "因误操作造成损失时请及时说明并配合调整，不要隐瞒或争吵。",
+        ],
+      },
+      {
+        title: "处理与申诉",
+        items: [
+          "轻微违规会提醒或警告；重复违规、恶意行为或破坏战局将踢出或封禁。",
+          "如对处理结果有异议，请保留截图或录像并联系管理组复核。",
+        ],
+      },
+    ],
+  },
   announcements: [
     {
       tag: "置顶",
@@ -63,6 +126,7 @@ const announcementList = document.querySelector("#announcementList");
 const sponsorList = document.querySelector("#sponsorList");
 const applicationList = document.querySelector("#applicationList");
 let currentSha = "";
+let currentRules = cloneContent(defaultContent.rules);
 
 if (!loginPanel || !adminApp || !statusNode || !loginStatusNode) {
   return;
@@ -131,8 +195,11 @@ function normalizeContent(content) {
   const fallback = cloneContent(defaultContent);
   const source = content && typeof content === "object" ? content : {};
   const site = source.site && typeof source.site === "object" ? source.site : {};
+  const match = source.match && typeof source.match === "object" ? source.match : {};
+  const rules = source.rules && typeof source.rules === "object" ? source.rules : {};
   const announcements = Array.isArray(source.announcements) ? source.announcements : fallback.announcements;
   const sponsors = Array.isArray(source.sponsors) ? source.sponsors : fallback.sponsors;
+  const ruleCategories = Array.isArray(rules.categories) ? rules.categories : fallback.rules.categories;
 
   return {
     site: {
@@ -142,6 +209,34 @@ function normalizeContent(content) {
       voiceText: cleanText(site.voiceText) || fallback.site.voiceText,
       voiceLink: cleanText(site.voiceLink) || fallback.site.voiceLink,
       recruitStatus: cleanText(site.recruitStatus) || fallback.site.recruitStatus,
+    },
+    match: {
+      map: cleanText(match.map) || fallback.match.map,
+      mode: cleanText(match.mode) || fallback.match.mode,
+      factionA: cleanText(match.factionA) || fallback.match.factionA,
+      factionB: cleanText(match.factionB) || fallback.match.factionB,
+      players: cleanText(match.players) || fallback.match.players,
+      queue: cleanText(match.queue) || fallback.match.queue,
+      summary: cleanText(match.summary) || fallback.match.summary,
+      joinUrl: cleanText(match.joinUrl) || fallback.match.joinUrl,
+      reserveUrl: cleanText(match.reserveUrl) || fallback.match.reserveUrl,
+      rulesUrl: cleanText(match.rulesUrl) || fallback.match.rulesUrl,
+      squadWikiUrl: cleanText(match.squadWikiUrl) || fallback.match.squadWikiUrl,
+      squadWikiSessionId: cleanText(match.squadWikiSessionId) || fallback.match.squadWikiSessionId,
+      squadWikiServerName: cleanText(match.squadWikiServerName) || fallback.match.squadWikiServerName,
+      joinProxyUrl: cleanText(match.joinProxyUrl) || fallback.match.joinProxyUrl,
+      statusProxyUrl: cleanText(match.statusProxyUrl) || fallback.match.statusProxyUrl,
+      joinNote: cleanText(match.joinNote) || fallback.match.joinNote,
+    },
+    rules: {
+      intro: cleanText(rules.intro) || fallback.rules.intro,
+      footerNote: cleanText(rules.footerNote) || fallback.rules.footerNote,
+      categories: ruleCategories
+        .map((category) => ({
+          title: cleanText(category?.title) || "服务器规则",
+          items: Array.isArray(category?.items) ? category.items.map((item) => cleanText(item)).filter(Boolean) : [],
+        }))
+        .filter((category) => category.title && category.items.length),
     },
     announcements: announcements.map((item) => ({
       tag: cleanText(item?.tag) || "公告",
@@ -251,6 +346,10 @@ function renderForm(content) {
   document.querySelectorAll("[data-site-field]").forEach((input) => {
     input.value = normalized.site[input.dataset.siteField] || "";
   });
+  document.querySelectorAll("[data-match-field]").forEach((input) => {
+    input.value = normalized.match[input.dataset.matchField] || "";
+  });
+  currentRules = cloneContent(normalized.rules);
   renderAnnouncements(normalized.announcements);
   renderSponsors(normalized.sponsors);
 }
@@ -259,6 +358,11 @@ function collectContent() {
   const site = {};
   document.querySelectorAll("[data-site-field]").forEach((input) => {
     site[input.dataset.siteField] = cleanText(input.value);
+  });
+
+  const match = {};
+  document.querySelectorAll("[data-match-field]").forEach((input) => {
+    match[input.dataset.matchField] = cleanText(input.value);
   });
 
   const announcements = [...announcementList.querySelectorAll(".admin-item")].map((card) => ({
@@ -275,7 +379,7 @@ function collectContent() {
     note: cleanText(card.querySelector('[data-field="note"]').value),
   }));
 
-  return normalizeContent({ site, announcements, sponsors });
+  return normalizeContent({ site, match, rules: currentRules, announcements, sponsors });
 }
 
 function toBase64(text) {
