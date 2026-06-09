@@ -24,6 +24,7 @@
       <nav class="site-nav" aria-label="主导航">
         <a href="#status">战备</a>
         <a href="#features">特色</a>
+        <a href="#about">关于</a>
         <a href="#events">公告</a>
         <a href="#squads">分队</a>
         <a href="#sponsors">赞助</a>
@@ -45,6 +46,7 @@
     <nav class="mobile-menu" id="mobileMenu" aria-label="移动端导航">
       <a href="#status">战备</a>
       <a href="#features">特色</a>
+      <a href="#about">关于</a>
       <a href="#events">公告</a>
       <a href="#squads">分队</a>
       <a href="#sponsors">赞助</a>
@@ -78,7 +80,7 @@
         </div>
         <div>
           <span>语音频道</span>
-          <strong><a href="https://kook.vip/azTBqj" target="_blank" rel="noopener">kook.vip/azTBqj</a></strong>
+          <strong><a data-config="voice" data-voice-link href="https://kook.vip/azTBqj" target="_blank" rel="noopener">kook.vip/azTBqj</a></strong>
         </div>
         <div>
           <span>招募状态</span>
@@ -115,6 +117,36 @@
             <span class="index">04</span>
             <h3>规则公开透明</h3>
             <p>预留位、OP 权限、服务器纪律、违规处理都有公开说明，管理不靠临时拍板</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section about-section" id="about">
+        <div class="section-head">
+          <p>About L.Q</p>
+          <h2>关于我们</h2>
+        </div>
+        <div class="about-grid">
+          <article class="about-lead">
+            <h3>狼群 L.Q 是一个面向中文玩家的 Squad 战术社区</h3>
+            <p>
+              我们希望把零散进服的玩家组织起来，让新人有人带、老玩家有队伍可配合、战局有明确目标 服务器会围绕固定战局、分队训练、队长招募和 OP 管理持续完善
+            </p>
+          </article>
+          <article>
+            <span>01</span>
+            <strong>不强制硬核</strong>
+            <p>重视沟通和协作，新人可以从基础岗位开始熟悉节奏</p>
+          </article>
+          <article>
+            <span>02</span>
+            <strong>不做混乱野服</strong>
+            <p>战局前明确地图、阵营、集合时间和语音频道</p>
+          </article>
+          <article>
+            <span>03</span>
+            <strong>长期招募队长</strong>
+            <p>欢迎能稳定组织队员、愿意带新人的玩家加入管理和分队建设</p>
           </article>
         </div>
       </section>
@@ -307,7 +339,7 @@
             <textarea name="message" rows="4" placeholder="在线时间、常用兵种、是否有 Squad 经验"></textarea>
           </label>
           <button class="primary-button" type="submit">
-            生成申请信息
+            提交申请信息
             <span aria-hidden="true">&gt;</span>
           </button>
           <p class="form-status" role="status" aria-live="polite"></p>
@@ -320,10 +352,9 @@
         <strong>狼群 L.Q</strong>
         <span>战术小队 Squad 服务器</span>
       </div>
-      <p>© 2026 L.Q Server </p>
+      <p><a href="./admin.html">管理登录</a> · © 2026 L.Q Server </p>
     </footer>
 
     <script src="./script.js"></script>
   </body>
 </html>
-

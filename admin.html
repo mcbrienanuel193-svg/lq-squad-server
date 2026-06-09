@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>狼群 L.Q 官网后台</title>
+  </head>
+  <body class="admin-page">
+    <section class="admin-login" id="adminLogin">
+      <div class="admin-login-card">
+        <p class="eyebrow">L.Q Admin</p>
+        <h1>管理员登录</h1>
+        <p>后台使用 GitHub Token 登录 登录后可以修改官网内容、发布配置，并查看当前浏览器收到的玩家申请记录</p>
+        <div class="admin-grid">
+          <label>
+            GitHub Token
+            <input id="githubToken" type="password" autocomplete="off" placeholder="粘贴你的 GitHub Token" />
+          </label>
+        </div>
+        <div class="admin-actions">
+          <button class="primary-button" type="button" id="loginAdmin">
+            登录后台
+            <span aria-hidden="true">&gt;</span>
+          </button>
+          <a class="secondary-button" href="./index.html">返回官网</a>
+        </div>
+        <p class="admin-status" id="loginStatus" role="status" aria-live="polite">未登录</p>
+      </div>
+    </section>
+
+    <div class="hidden" id="adminApp">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">L.Q Admin</p>
+          <h1>官网后台</h1>
+        </div>
+        <div class="admin-actions">
+          <p class="admin-status" id="adminStatus" role="status" aria-live="polite">已登录</p>
+          <button class="secondary-button" type="button" id="logoutAdmin">退出登录</button>
+          <a class="secondary-button" href="./index.html">返回官网</a>
+        </div>
+      </header>
+
+      <main class="admin-shell">
+        <nav class="admin-tabs" aria-label="后台导航">
+          <button class="admin-tab active" type="button" data-admin-tab="content">内容设置</button>
+          <button class="admin-tab" type="button" data-admin-tab="applications">申请记录</button>
+          <button class="admin-tab" type="button" data-admin-tab="publish">发布设置</button>
+        </nav>
+
+        <div data-admin-panel="content">
+          <section class="admin-panel">
+            <div class="admin-panel-title">
+              <div>
+                <p class="eyebrow">Site</p>
+                <h2>基础信息</h2>
+              </div>
+            </div>
+
+            <div class="admin-grid">
+              <label>
+                服务器名称
+                <input data-site-field="serverName" type="text" />
+              </label>
+              <label>
+                招募状态
+                <input data-site-field="recruitStatus" type="text" />
+              </label>
+              <label>
+                QQ 群号
+                <input data-site-field="qq" type="text" />
+              </label>
+              <label>
+                QQ 入群链接
+                <input data-site-field="qqLink" type="url" />
+              </label>
+              <label>
+                语音频道文字
+                <input data-site-field="voiceText" type="text" />
+              </label>
+              <label>
+                语音频道链接
+                <input data-site-field="voiceLink" type="url" />
+              </label>
+            </div>
+          </section>
+
+          <section class="admin-panel">
+            <div class="admin-panel-title">
+              <div>
+                <p class="eyebrow">Announcements</p>
+                <h2>公告内容</h2>
+              </div>
+              <button class="secondary-button compact-button" type="button" id="addAnnouncement">新增公告</button>
+            </div>
+            <div class="admin-list" id="announcementList"></div>
+          </section>
+
+          <section class="admin-panel">
+            <div class="admin-panel-title">
+              <div>
+                <p class="eyebrow">Sponsors</p>
+                <h2>赞助名单</h2>
+              </div>
+              <button class="secondary-button compact-button" type="button" id="addSponsor">新增赞助</button>
+            </div>
+            <div class="admin-list" id="sponsorList"></div>
+          </section>
+        </div>
+
+        <div class="hidden" data-admin-panel="applications">
+          <section class="admin-panel">
+            <div class="admin-panel-title">
+              <div>
+                <p class="eyebrow">Applications</p>
+                <h2>玩家申请信息</h2>
+              </div>
+              <div class="admin-actions">
+                <button class="secondary-button compact-button" type="button" id="exportApplications">导出申请</button>
+                <button class="secondary-button compact-button" type="button" id="clearApplications">清空本机记录</button>
+              </div>
+            </div>
+            <div class="application-list" id="applicationList"></div>
+          </section>
+        </div>
+
+        <div class="hidden" data-admin-panel="publish">
+          <section class="admin-panel">
+            <div class="admin-panel-title">
+              <div>
+                <p class="eyebrow">GitHub</p>
+                <h2>发布设置</h2>
+              </div>
+            </div>
+
+            <div class="admin-grid">
+              <label>
+                仓库所有者
+                <input id="repoOwner" type="text" value="mcbrienanuel193-svg" />
+              </label>
+              <label>
+                仓库名称
+                <input id="repoName" type="text" value="lq-squad-server" />
+              </label>
+              <label>
+                分支
+                <input id="repoBranch" type="text" value="main" />
+              </label>
+            </div>
+
+            <div class="admin-actions">
+              <button class="secondary-button" type="button" id="loadRemote">读取线上内容</button>
+              <button class="primary-button" type="button" id="publishRemote">
+                发布更新
+                <span aria-hidden="true">&gt;</span>
+              </button>
+              <button class="secondary-button" type="button" id="downloadJson">导出配置</button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script src="./admin.js"></script>
+  </body>
+</html>

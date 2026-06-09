@@ -6,7 +6,10 @@
 
 - `index.html`: 页面结构和展示文案
 - `styles.css`: 页面样式、桌面端和移动端适配
-- `script.js`: 移动端菜单、导航高亮、复制群号、申请信息生成
+- `script.js`: 读取 `content.json`、移动端菜单、导航高亮、申请信息生成
+- `content.json`: 官网可编辑内容，包括基础信息、公告和赞助名单
+- `admin.html`: 后台页面
+- `admin.js`: 后台读取、编辑、导出和发布逻辑
 - `assets/lq-avatar.png`: 服务器头像和 favicon
 
 页面已包含首屏入场、滚动显现、按钮点击波纹、移动端菜单滑动、卡片悬停和招募面板扫描动效 系统开启“减少动态效果”时会自动降低动画
@@ -15,16 +18,24 @@
 
 把整个 `lq-server-site` 文件夹上传到服务器网站根目录即可 也可以只上传文件夹内的内容到 Nginx、宝塔、Apache 或对象存储静态站点
 
-## 需要替换的信息
+## 后台编辑方式
 
-打开 `script.js`，把开头的配置改成真实信息：
+上传到 GitHub Pages 后，后台地址是：
 
-```js
-const config = {
-  qq: "907522575",
-  qqLink: "https://qm.qq.com/q/JWGSe4YnGm",
-  serverIp: "狼群服务器",
-};
+```text
+https://你的域名/admin.html
 ```
 
-页面里的公告、赞助名单、分队介绍都在 `index.html`，可以直接按真实服务器资料修改
+如果还没有绑定域名，就用：
+
+```text
+https://mcbrienanuel193-svg.github.io/lq-squad-server/admin.html
+```
+
+后台可以修改基础信息、公告内容和赞助名单 发布时需要输入 GitHub Token，Token 只在浏览器里使用，不要写进任何文件
+
+后台带有登录页和申请记录页 当前申请记录保存在浏览器本机，用于免费静态站的轻量记录 如果要让所有玩家跨设备提交后都自动进入后台，需要额外接入表单服务、数据库或服务器接口
+
+## GitHub Token 权限
+
+建议创建 fine-grained personal access token，只选择这个仓库，并给 `Contents` 设置 `Read and write` 权限
