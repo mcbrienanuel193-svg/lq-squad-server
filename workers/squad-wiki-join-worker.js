@@ -1,10 +1,13 @@
 const SQUAD_WIKI_JOIN_URL = "https://www.squad.wiki/servers.php?action=join";
 const SQUAD_WIKI_LIST_URL = "https://www.squad.wiki/servers.php?action=list";
+const SQUADBROWSER_URL = "https://squadbrowser.app/";
+const SQUADBROWSER_GET_SERVERS_ACTION = "404764fc6fe0bbc56e2d4039d07a94500291305ba6";
 
 const DEFAULT_SERVER_ID = "9c93a53f7ac94858a09dfa326cbd7bb2";
 const DEFAULT_SERVER_NAME =
   "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩";
-const DEFAULT_NAME_HINTS = ["狼群", "【L.Q】", "L.Q"];
+const DEFAULT_NAME_HINTS = ["狼群", "【L.Q】", "L.Q", "LQ"];
+const DEFAULT_SQUADBROWSER_SEARCH = "L.Q";
 
 function corsHeaders(request, env) {
   const allowedOrigin = env.ALLOWED_ORIGIN || "*";
@@ -27,6 +30,15 @@ function jsonResponse(request, env, body, status = 200) {
   });
 }
 
+function cleanText(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function asNumber(value) {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
 async function readPayload(request) {
   if (request.method === "POST") {
     return request.json().catch(() => ({}));
@@ -38,24 +50,43 @@ function getServerConfig(env, payload = {}) {
   return {
     serverID: payload.serverID || env.SQUAD_WIKI_SESSION_ID || DEFAULT_SERVER_ID,
     serverName: payload.serverName || env.SQUAD_WIKI_SERVER_NAME || DEFAULT_SERVER_NAME,
+    squadBrowserSearch: payload.search || env.SQUADBROWSER_SEARCH || DEFAULT_SQUADBROWSER_SEARCH,
   };
 }
 
-function serverMatchesName(server, serverName) {
-  const name = String(server && server.serverName ? server.serverName : "");
-  const configured = String(serverName || "");
-  const hints = [
-    ...DEFAULT_NAME_HINTS,
-    ...configured
-      .split(/\s+/)
-      .map((part) => part.trim())
-      .filter((part) => part.length >= 2 && !/^[=#-]+$/.test(part)),
-  ];
-
-  return hints.some((hint) => name.includes(hint));
+function getServerName(server) {
+  return cleanText(server?.serverName || server?.name || server?.hostname);
 }
 
-async function findCurrentServer(serverID, serverName) {
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function getServerSearchHints(serverName) {
+  const nameParts = cleanText(serverName)
+    .split(/[\s=|｜#【】\[\]（）()]+/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 2 && !/^\d+$/.test(part));
+
+  return unique([...DEFAULT_NAME_HINTS, ...nameParts]);
+}
+
+function serverMatchesName(server, serverName) {
+  const name = getServerName(server);
+  const configured = cleanText(serverName);
+
+  if (!name) {
+    return false;
+  }
+
+  if (configured && name === configured) {
+    return true;
+  }
+
+  return getServerSearchHints(configured).some((hint) => name.includes(hint));
+}
+
+async function findCurrentWikiServer(serverID, serverName) {
   let fallback = null;
   let lastCache = null;
 
@@ -84,13 +115,111 @@ async function findCurrentServer(serverID, serverName) {
   return { server: fallback, cache: lastCache };
 }
 
+function parseSquadBrowserPayload(text) {
+  const lines = String(text || "").split(/\r?\n/);
+
+  for (const line of lines) {
+    const matched = line.match(/^\d+:(.*)$/);
+    if (!matched) {
+      continue;
+    }
+
+    try {
+      const payload = JSON.parse(matched[1]);
+      if (payload && typeof payload === "object" && Array.isArray(payload.data)) {
+        return payload;
+      }
+    } catch {
+      // Next.js action streams include several non-data records; ignore them.
+    }
+  }
+
+  throw new Error("SquadBrowser action payload was not readable.");
+}
+
+async function fetchSquadBrowserPage(search, page) {
+  const filters = {
+    name: search,
+    page,
+    limit: 30,
+    showFull: true,
+    showEmpty: true,
+    showPassworded: true,
+  };
+
+  const response = await fetch(SQUADBROWSER_URL, {
+    method: "POST",
+    headers: {
+      Accept: "text/x-component",
+      "Content-Type": "text/plain;charset=UTF-8",
+      "Next-Action": SQUADBROWSER_GET_SERVERS_ACTION,
+      Origin: SQUADBROWSER_URL,
+      Referer: SQUADBROWSER_URL,
+    },
+    body: JSON.stringify([filters]),
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`SquadBrowser request failed: ${response.status}`);
+  }
+
+  return parseSquadBrowserPayload(text);
+}
+
+function normalizeSquadBrowserServer(server) {
+  return {
+    serverName: getServerName(server),
+    squadBrowserId: cleanText(server?.id),
+    sessionId: cleanText(server?.session_id || server?.sessionId),
+    address: cleanText(server?.address),
+    map: cleanText(server?.current_map || server?.map),
+    gameMode: cleanText(server?.game_mode || server?.gameMode),
+    factionA: cleanText(server?.team_1 || server?.teamOne),
+    factionB: cleanText(server?.team_2 || server?.teamTwo),
+    playerCount: asNumber(server?.current_players ?? server?.currentPlayers ?? server?.playerCount),
+    maxPlayers: asNumber(server?.max_players ?? server?.maxPlayers),
+    queueCount: asNumber(server?.queue_players ?? server?.queueCount ?? server?.queue),
+    source: "SquadBrowser",
+  };
+}
+
+async function findCurrentSquadBrowserServer(serverName, search) {
+  let fallback = null;
+  let fallbackMeta = null;
+
+  for (let page = 1; page <= 4; page += 1) {
+    const payload = await fetchSquadBrowserPage(search, page);
+    const servers = Array.isArray(payload.data) ? payload.data : [];
+    const meta = payload.meta || null;
+
+    const matched = servers.find((server) => serverMatchesName(server, serverName));
+    if (matched) {
+      return { server: normalizeSquadBrowserServer(matched), cache: { source: "SquadBrowser", page, meta } };
+    }
+
+    if (!fallback && servers.length) {
+      fallback = servers[0];
+      fallbackMeta = meta;
+    }
+
+    if (!meta?.hasMore) {
+      break;
+    }
+  }
+
+  return fallback
+    ? { server: normalizeSquadBrowserServer(fallback), cache: { source: "SquadBrowser", page: 1, meta: fallbackMeta } }
+    : { server: null, cache: null };
+}
+
 async function createJoinLink(request, env) {
   const payload = await readPayload(request);
   const server = getServerConfig(env, payload);
-  const current = await findCurrentServer(server.serverID, server.serverName);
+  const current = await findCurrentWikiServer(server.serverID, server.serverName);
   const target = current.server
     ? { serverID: current.server.sessionId, serverName: current.server.serverName || server.serverName }
-    : server;
+    : { serverID: server.serverID, serverName: server.serverName };
 
   const upstream = await fetch(SQUAD_WIKI_JOIN_URL, {
     method: "POST",
@@ -109,15 +238,52 @@ async function createJoinLink(request, env) {
 
 async function findServer(request, env) {
   const url = new URL(request.url);
-  const serverID = url.searchParams.get("serverID") || env.SQUAD_WIKI_SESSION_ID || DEFAULT_SERVER_ID;
-  const serverName = url.searchParams.get("serverName") || env.SQUAD_WIKI_SERVER_NAME || DEFAULT_SERVER_NAME;
-  const current = await findCurrentServer(serverID, serverName);
+  const payload = request.method === "POST" ? await readPayload(request) : {};
+  const server = getServerConfig(env, payload);
+  const serverID = url.searchParams.get("serverID") || server.serverID;
+  const serverName = url.searchParams.get("serverName") || server.serverName;
+  const search = url.searchParams.get("search") || server.squadBrowserSearch;
+  let squadBrowserError = "";
 
-  if (current.server) {
-    return jsonResponse(request, env, { ok: true, server: current.server, cache: current.cache || null });
+  try {
+    const current = await findCurrentSquadBrowserServer(serverName, search);
+    if (current.server) {
+      return jsonResponse(request, env, {
+        ok: true,
+        source: "SquadBrowser Worker",
+        generatedAt: new Date().toISOString(),
+        server: current.server,
+        cache: current.cache || null,
+      });
+    }
+  } catch (error) {
+    squadBrowserError = error instanceof Error ? error.message : String(error);
   }
 
-  return jsonResponse(request, env, { ok: false, error: "未找到服务器", cache: current.cache || null }, 404);
+  const current = await findCurrentWikiServer(serverID, serverName);
+  if (current.server) {
+    return jsonResponse(request, env, {
+      ok: true,
+      source: "Squad Wiki fallback",
+      generatedAt: new Date().toISOString(),
+      server: current.server,
+      cache: current.cache || null,
+      squadBrowserError,
+    });
+  }
+
+  return jsonResponse(
+    request,
+    env,
+    {
+      ok: false,
+      source: "SquadBrowser Worker",
+      error: "未找到狼群服务器",
+      squadBrowserError,
+      cache: current.cache || null,
+    },
+    404,
+  );
 }
 
 export default {
@@ -127,11 +293,11 @@ export default {
     }
 
     const url = new URL(request.url);
-    if (url.pathname.endsWith("/status")) {
-      return findServer(request, env);
-    }
-    if (url.pathname.endsWith("/join") || request.method === "POST") {
+    if (url.pathname.endsWith("/join") || (request.method === "POST" && !url.pathname.endsWith("/status"))) {
       return createJoinLink(request, env);
+    }
+    if (url.pathname.endsWith("/status") || request.method === "GET") {
+      return findServer(request, env);
     }
 
     return jsonResponse(request, env, {

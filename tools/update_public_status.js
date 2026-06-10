@@ -3,7 +3,9 @@ const path = require("node:path");
 
 const ROOT_DIR = path.resolve(__dirname, "..");
 const OUTPUT_FILE = path.join(ROOT_DIR, "public-status.json");
-const LIST_URL = "https://www.squad.wiki/servers.php";
+const SQUADBROWSER_URL = "https://squadbrowser.app/";
+const SQUADBROWSER_GET_SERVERS_ACTION = "404764fc6fe0bbc56e2d4039d07a94500291305ba6";
+const WIKI_LIST_URL = "https://www.squad.wiki/servers.php";
 const TARGET_SESSION_ID = "9c93a53f7ac94858a09dfa326cbd7bb2";
 const TARGET_SERVER_NAME =
   "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩";
@@ -13,8 +15,17 @@ function cleanText(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function asNumber(value) {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
+}
+
+function getServerName(server) {
+  return cleanText(server?.serverName || server?.name || server?.hostname);
 }
 
 function getServerSearchHints() {
@@ -26,7 +37,7 @@ function getServerSearchHints() {
 }
 
 function serverMatchesName(server) {
-  const serverName = cleanText(server && server.serverName);
+  const serverName = getServerName(server);
   if (!serverName) {
     return false;
   }
@@ -38,8 +49,82 @@ function serverMatchesName(server) {
   return getServerSearchHints().some((hint) => serverName.includes(hint));
 }
 
-async function fetchServerChunk(offset, limit) {
-  const url = new URL(LIST_URL);
+function parseSquadBrowserPayload(text) {
+  for (const line of String(text || "").split(/\r?\n/)) {
+    const matched = line.match(/^\d+:(.*)$/);
+    if (!matched) {
+      continue;
+    }
+
+    try {
+      const payload = JSON.parse(matched[1]);
+      if (payload && typeof payload === "object" && Array.isArray(payload.data)) {
+        return payload;
+      }
+    } catch {
+      // Ignore non-data records in the React Server Component stream.
+    }
+  }
+
+  throw new Error("SquadBrowser action payload was not readable.");
+}
+
+async function fetchSquadBrowserPage(page) {
+  const response = await fetch(SQUADBROWSER_URL, {
+    method: "POST",
+    headers: {
+      Accept: "text/x-component",
+      "Content-Type": "text/plain;charset=UTF-8",
+      "Next-Action": SQUADBROWSER_GET_SERVERS_ACTION,
+      Origin: SQUADBROWSER_URL,
+      Referer: SQUADBROWSER_URL,
+    },
+    body: JSON.stringify([
+      {
+        name: "L.Q",
+        page,
+        limit: 30,
+        showFull: true,
+        showEmpty: true,
+        showPassworded: true,
+      },
+    ]),
+  });
+
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`SquadBrowser request failed: ${response.status}`);
+  }
+
+  return parseSquadBrowserPayload(text);
+}
+
+async function findSquadBrowserServer() {
+  let fallback = null;
+
+  for (let page = 1; page <= 4; page += 1) {
+    const payload = await fetchSquadBrowserPage(page);
+    const servers = Array.isArray(payload.data) ? payload.data : [];
+    const matched = servers.find(serverMatchesName);
+
+    if (matched) {
+      return { server: matched, cache: { source: "SquadBrowser", page, meta: payload.meta || null } };
+    }
+
+    if (!fallback && servers.length) {
+      fallback = { server: servers[0], cache: { source: "SquadBrowser", page, meta: payload.meta || null } };
+    }
+
+    if (!payload.meta?.hasMore) {
+      break;
+    }
+  }
+
+  return fallback || { server: null, cache: null };
+}
+
+async function fetchWikiServerChunk(offset, limit) {
+  const url = new URL(WIKI_LIST_URL);
   url.searchParams.set("action", "list");
   url.searchParams.set("offset", String(offset));
   url.searchParams.set("limit", String(limit));
@@ -56,12 +141,12 @@ async function fetchServerChunk(offset, limit) {
   return data;
 }
 
-async function findCurrentServer() {
+async function findWikiServer() {
   let fallback = null;
   let fallbackCache = null;
 
   for (let offset = 0; offset < 1400; offset += 200) {
-    const data = await fetchServerChunk(offset, 200);
+    const data = await fetchWikiServerChunk(offset, 200);
     const servers = data.servers || [];
     fallbackCache = data.cache || fallbackCache;
 
@@ -82,9 +167,26 @@ async function findCurrentServer() {
   return { server: fallback, cache: fallbackCache };
 }
 
-function normalizeServer(server) {
+function normalizeServer(server, source) {
   if (!server) {
     return null;
+  }
+
+  if (source === "SquadBrowser") {
+    return {
+      serverName: getServerName(server),
+      squadBrowserId: cleanText(server.id),
+      sessionId: cleanText(server.session_id || server.sessionId),
+      address: cleanText(server.address) || null,
+      map: cleanText(server.current_map || server.map),
+      gameMode: cleanText(server.game_mode || server.gameMode),
+      factionA: cleanText(server.team_1 || server.teamOne),
+      factionB: cleanText(server.team_2 || server.teamTwo),
+      playerCount: asNumber(server.current_players ?? server.currentPlayers ?? server.playerCount),
+      maxPlayers: asNumber(server.max_players ?? server.maxPlayers),
+      queueCount: asNumber(server.queue_players ?? server.queueCount ?? server.queue),
+      source: "SquadBrowser",
+    };
   }
 
   return {
@@ -98,6 +200,7 @@ function normalizeServer(server) {
     isLicensed: Boolean(server.isLicensed),
     isCoop: Boolean(server.isCoop),
     region: cleanText(server.region) || null,
+    source: "Squad Wiki fallback",
   };
 }
 
@@ -110,10 +213,11 @@ function readExistingStatus() {
 }
 
 function comparableStatus(status) {
+  const statusSource = String(status?.server?.source || status?.source || "");
   return JSON.stringify({
     ok: Boolean(status && status.ok),
     error: cleanText(status && status.error),
-    server: status && status.server ? normalizeServer(status.server) : null,
+    server: status && status.server ? normalizeServer(status.server, statusSource.includes("SquadBrowser") ? "SquadBrowser" : "Squad Wiki") : null,
   });
 }
 
@@ -129,15 +233,29 @@ function writeStatus(nextStatus) {
 }
 
 async function main() {
-  const current = await findCurrentServer();
   const generatedAt = new Date().toISOString();
+  let current = null;
+  let source = "SquadBrowser";
+  let squadBrowserError = "";
+
+  try {
+    current = await findSquadBrowserServer();
+  } catch (error) {
+    squadBrowserError = error instanceof Error ? error.message : String(error);
+  }
+
+  if (!current?.server) {
+    current = await findWikiServer();
+    source = "Squad Wiki fallback";
+  }
 
   if (!current.server) {
     writeStatus({
       ok: false,
-      source: "Squad Wiki 公开列表",
+      source,
       generatedAt,
       error: "未在公开服务器列表中找到狼群服务器",
+      squadBrowserError,
       server: null,
       cache: current.cache || null,
     });
@@ -145,16 +263,18 @@ async function main() {
     return;
   }
 
+  const server = normalizeServer(current.server, source === "SquadBrowser" ? "SquadBrowser" : "Squad Wiki");
   writeStatus({
     ok: true,
-    source: "Squad Wiki 公开列表",
+    source: source === "SquadBrowser" ? "SquadBrowser 公开列表" : "Squad Wiki fallback",
     generatedAt,
-    server: normalizeServer(current.server),
+    server,
     cache: current.cache || null,
+    squadBrowserError: squadBrowserError || undefined,
   });
 
   console.log(
-    `Updated public status: ${current.server.map || "unknown map"}, ${current.server.playerCount ?? "?"} players, queue ${current.server.queueCount ?? "?"}`,
+    `Updated public status: ${server.map || "unknown map"}, ${server.playerCount ?? "?"} players, queue ${server.queueCount ?? "?"}`,
   );
 }
 

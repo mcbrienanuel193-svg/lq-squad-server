@@ -26,7 +26,7 @@ const defaultContent = {
     statusProxyUrl: "https://lq-squad-status.mcbrienanuel193.workers.dev/",
     publicStatusUrl: "./public-status.json",
     publicListUrl: "",
-    joinNote: "当前对局来自 Cloudflare Worker 实时读取的 Squad Wiki 公开服务器列表。",
+    joinNote: "当前对局来自 Cloudflare Worker 实时读取的 SquadBrowser 公开服务器列表，进服仍跳转 Squad Wiki。",
   },
   rules: {
     intro: "进入狼群 L.Q 服务器前，请先确认并遵守以下规则。管理员会根据现场情况进行提醒、警告、踢出或封禁处理。",
@@ -224,13 +224,53 @@ function formatSquadMap(map) {
 }
 
 function formatSquadFaction(faction) {
-  return cleanText(faction)
+  const names = {
+    ADF: "澳大利亚国防军",
+    BAF: "英军",
+    CAF: "加拿大军",
+    IMF: "民兵",
+    INS: "叛军",
+    MEA: "中东联盟",
+    MEI: "中东联盟",
+    PLA: "中国人民解放军",
+    PLANMC: "中国海军陆战队",
+    RGF: "俄军",
+    TLF: "土耳其陆军",
+    USA: "美军",
+    USMC: "美国海军陆战队",
+    VDV: "俄空降军",
+  };
+  const roles = {
+    AirAssault: "空中突击",
+    Armored: "装甲",
+    CombinedArms: "联合兵种",
+    LightInfantry: "轻步兵",
+    Mechanized: "机械化",
+    Motorized: "摩托化",
+    Support: "支援",
+  };
+  const text = cleanText(faction);
+  const tokens = text.split("_").map((token) => token.trim()).filter(Boolean);
+  const code = tokens[0]?.toUpperCase();
+  const roleText = tokens
+    .slice(1)
+    .filter((token) => !["LD", "LO", "STD", "SUP"].includes(token.toUpperCase()))
+    .map((token) => roles[token] || token.replace(/([a-z])([A-Z])/g, "$1 $2"))
+    .join(" / ");
+
+  if (names[code]) {
+    return roleText ? `${names[code]} / ${roleText}` : names[code];
+  }
+
+  const normalized = text
     .replace(/_/g, " ")
     .replace(/\bCombinedArms\b/i, "Combined Arms")
+    .replace(/\bMechanized\b/i, "Mechanized")
     .replace(/\bMotorized\b/i, "Motorized")
     .replace(/\bAirAssault\b/i, "Air Assault")
     .replace(/\s+/g, " ")
     .trim();
+  return normalized;
 }
 
 function formatLiveTime(date = new Date()) {
@@ -261,21 +301,30 @@ function normalizeLiveServerPayload(data) {
   }
 
   const playersText = firstValue(source.players, source.playerText);
-  const playerCount = toNumber(firstValue(source.playerCount, source.currentPlayers, source.numPlayers, source.playersOnline, playersText));
-  const maxPlayers = toNumber(firstValue(source.maxPlayers, source.maxPlayerCount, source.slots, source.capacity));
-  const queueCount = toNumber(firstValue(source.queueCount, source.queue, source.publicQueue, source.reserveQueue));
+  const playerCount = toNumber(
+    firstValue(
+      source.playerCount,
+      source.currentPlayers,
+      source.current_players,
+      source.numPlayers,
+      source.playersOnline,
+      playersText,
+    ),
+  );
+  const maxPlayers = toNumber(firstValue(source.maxPlayers, source.max_players, source.maxPlayerCount, source.slots, source.capacity));
+  const queueCount = toNumber(firstValue(source.queueCount, source.queue_players, source.queue, source.publicQueue, source.reserveQueue));
 
   return {
     serverName: cleanText(firstValue(source.serverName, source.name, source.hostname)),
-    sessionId: cleanText(firstValue(source.sessionId, source.serverID, source.serverId, source.id)),
-    map: cleanText(firstValue(source.map, source.currentMap, source.layer, source.layerName)),
-    gameMode: cleanText(firstValue(source.gameMode, source.mode, source.gamemode)),
-    factionA: cleanText(firstValue(source.factionA, source.teamOne, source.TeamOne_s)),
-    factionB: cleanText(firstValue(source.factionB, source.teamTwo, source.TeamTwo_s)),
+    sessionId: cleanText(firstValue(source.sessionId, source.session_id, source.serverID, source.serverId, source.squadWikiSessionId)),
+    map: cleanText(firstValue(source.map, source.currentMap, source.current_map, source.layer, source.layerName)),
+    gameMode: cleanText(firstValue(source.gameMode, source.game_mode, source.mode, source.gamemode)),
+    factionA: cleanText(firstValue(source.factionA, source.teamOne, source.team_1, source.TeamOne_s)),
+    factionB: cleanText(firstValue(source.factionB, source.teamTwo, source.team_2, source.TeamTwo_s)),
     playerCount: Number.isFinite(playerCount) ? playerCount : undefined,
     maxPlayers: Number.isFinite(maxPlayers) ? maxPlayers : undefined,
     queueCount: Number.isFinite(queueCount) ? queueCount : undefined,
-    source: cleanText(firstValue(source.source, data?.source, "RCON")),
+    source: cleanText(firstValue(source.source, data?.source, "SquadBrowser")),
   };
 }
 
@@ -387,8 +436,13 @@ function normalizePublicStatusPayload(data, match) {
 
   return normalizeLiveServerPayload({
     server: found,
-    source: cleanText(firstValue(data?.source, "Squad Wiki 公开列表")),
+    source: cleanText(firstValue(data?.source, "SquadBrowser 公开列表")),
   });
+}
+
+function isLegacySquadWikiWorker(data, server) {
+  const sourceText = `${cleanText(data?.source)} ${cleanText(server?.source)}`;
+  return /Squad Wiki Worker/i.test(sourceText);
 }
 
 function addMatchQueryParams(url, match) {
@@ -485,7 +539,7 @@ async function refreshLiveMatchStatus(match) {
   ].filter((source) => source.url);
 
   setMatchLoadingState();
-  setLiveMatchStatus("正在同步 Squad Wiki 实时对局...", "busy");
+  setLiveMatchStatus("正在同步 SquadBrowser 实时对局...", "busy");
 
   for (const source of sources) {
     try {
@@ -505,6 +559,9 @@ async function refreshLiveMatchStatus(match) {
         source.type === "status" ? normalizeLiveServerPayload(data) : normalizePublicStatusPayload(data, match);
       if (!server) {
         throw new Error("实时状态格式不正确");
+      }
+      if (source.type === "status" && isLegacySquadWikiWorker(data, server)) {
+        throw new Error("旧版 Worker 数据源已跳过");
       }
 
       applyLiveMatchServer(server, data.cache || null);
@@ -731,6 +788,8 @@ function setupReveal() {
     ".match-stat",
     ".join-server-button",
     ".reserve-slot-button",
+    ".cdk-button",
+    ".student-benefit-button",
     ".rules-button",
     ".rule-category",
     ".feature-grid article",
@@ -748,17 +807,9 @@ function setupReveal() {
 
   revealTargets.forEach((target, index) => {
     target.classList.add("reveal");
-    target.style.setProperty("--reveal-delay", `${Math.min((index % 4) * 70, 210)}ms`);
+    target.dataset.revealDirection = "up";
+    target.style.setProperty("--reveal-delay", `${Math.min((index % 4) * 52, 156)}ms`);
   });
-
-  function revealVisibleTargets() {
-    const viewportBottom = window.innerHeight * 0.94;
-
-    revealTargets.forEach((target) => {
-      const rect = target.getBoundingClientRect();
-      target.classList.toggle("visible", rect.top < viewportBottom && rect.bottom > window.innerHeight * 0.06);
-    });
-  }
 
   if (reduceMotion.matches || !("IntersectionObserver" in window)) {
     revealTargets.forEach((target) => target.classList.add("visible"));
@@ -767,6 +818,7 @@ function setupReveal() {
 
   document.documentElement.dataset.scrollDirection = "down";
   let lastScrollY = window.scrollY;
+  let ticking = false;
   function updateRevealDirection() {
     const currentScrollY = window.scrollY;
     if (Math.abs(currentScrollY - lastScrollY) > 1) {
@@ -778,24 +830,30 @@ function setupReveal() {
   const revealObserver = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
+        const direction = entry.boundingClientRect.top < 0 ? "down" : "up";
+        entry.target.dataset.revealDirection = direction;
         entry.target.classList.toggle("visible", entry.isIntersecting);
       });
     },
-    { rootMargin: "-8% 0px -12% 0px", threshold: 0.12 }
+    { rootMargin: "-6% 0px -10% 0px", threshold: [0, 0.16, 0.32] }
   );
 
   revealTargets.forEach((target) => revealObserver.observe(target));
   updateRevealDirection();
-  requestAnimationFrame(revealVisibleTargets);
   window.addEventListener(
     "scroll",
     () => {
-      updateRevealDirection();
-      revealVisibleTargets();
+      if (ticking) {
+        return;
+      }
+      ticking = true;
+      requestAnimationFrame(() => {
+        updateRevealDirection();
+        ticking = false;
+      });
     },
     { passive: true }
   );
-  window.addEventListener("resize", revealVisibleTargets);
 }
 
 function setupSectionObserver() {
@@ -1212,6 +1270,133 @@ function setupReservePurchase(content) {
   });
 }
 
+function updateStudentFileStatus(modal) {
+  const status = modal.querySelector("[data-student-file-status]");
+  if (!status) {
+    return;
+  }
+
+  const selected = [...modal.querySelectorAll("[data-student-file]")]
+    .map((input) => {
+      const files = [...(input.files || [])].map((file) => file.name).filter(Boolean);
+      return files.length ? `${input.dataset.studentFile}：${files.join("、")}` : "";
+    })
+    .filter(Boolean);
+
+  status.textContent = selected.length
+    ? `已在本机选择：${selected.join("；")}。请进 QQ 群联系管理提交审核。`
+    : "尚未选择材料；准备好后请进 QQ 群联系管理提交审核。";
+}
+
+function ensureStudentBenefitModal() {
+  let modal = document.querySelector("[data-student-modal]");
+
+  if (modal) {
+    return modal;
+  }
+
+  modal = document.createElement("div");
+  modal.className = "student-modal hidden";
+  modal.dataset.studentModal = "";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "studentBenefitTitle");
+  modal.innerHTML = `
+    <div class="student-backdrop" data-student-close></div>
+    <section class="student-dialog">
+      <header class="student-header">
+        <div>
+          <p class="eyebrow">STUDENT BENEFIT</p>
+          <h2 id="studentBenefitTitle">高考生预留位福利</h2>
+        </div>
+        <button class="student-close" type="button" data-student-close aria-label="关闭高考生福利窗口">x</button>
+      </header>
+      <div class="student-body">
+        <div class="student-benefit-steps">
+          <article>
+            <span>01 准考证审核</span>
+            <strong>领取 15 天预留位</strong>
+            <p>高考生凭本人准考证，经管理审核后可领取 15 天预留位。</p>
+          </article>
+          <article>
+            <span>02 录取通知书审核</span>
+            <strong>可再领 15 天</strong>
+            <p>收到大学录取通知书后，凭通知书联系管理，可再领取 15 天预留位。</p>
+          </article>
+        </div>
+        <div class="student-upload-panel">
+          <p>本页面只用于本地选择材料，不会上传或保存文件。请加入 QQ 群后联系管理，提交准考证或录取通知书审核领取。</p>
+          <div class="student-file-grid">
+            <label class="student-file-field">
+              <span>准考证图片/文件</span>
+              <input type="file" data-student-file="准考证" accept="image/*,.pdf" />
+            </label>
+            <label class="student-file-field">
+              <span>大学录取通知书图片/文件</span>
+              <input type="file" data-student-file="录取通知书" accept="image/*,.pdf" />
+            </label>
+          </div>
+          <p class="student-file-status" data-student-file-status>尚未选择材料；准备好后请进 QQ 群联系管理提交审核。</p>
+        </div>
+      </div>
+      <footer class="student-footer">
+        <a class="primary-button" data-student-qq data-qq-link href="https://qm.qq.com/q/JWGSe4YnGm" target="_blank" rel="noopener">进入 QQ 群联系管理</a>
+        <button class="secondary-button" type="button" data-student-close>关闭</button>
+      </footer>
+    </section>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelectorAll("[data-student-close]").forEach((control) => {
+    control.addEventListener("click", closeStudentBenefitModal);
+  });
+
+  modal.querySelectorAll("[data-student-file]").forEach((input) => {
+    input.addEventListener("change", () => updateStudentFileStatus(modal));
+  });
+
+  return modal;
+}
+
+function openStudentBenefitModal(qqLink = defaultContent.site.qqLink) {
+  const modal = ensureStudentBenefitModal();
+
+  modal.querySelectorAll("[data-qq-link]").forEach((node) => {
+    node.href = secureExternalUrl(qqLink);
+  });
+  updateStudentFileStatus(modal);
+  modal.classList.remove("hidden");
+  document.body.classList.add("modal-open");
+  modal.querySelector(".student-close")?.focus();
+}
+
+function closeStudentBenefitModal() {
+  const modal = document.querySelector("[data-student-modal]");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.add("hidden");
+  document.body.classList.remove("modal-open");
+}
+
+function setupStudentBenefit(content) {
+  const site = normalizeContent(content).site;
+
+  document.querySelectorAll("[data-student-benefit-open]").forEach((control) => {
+    control.addEventListener("click", () => {
+      openStudentBenefitModal(site.qqLink);
+    });
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeStudentBenefitModal();
+    }
+  });
+}
+
 async function boot() {
   const content = await loadContent();
   applySiteContent(content);
@@ -1224,6 +1409,7 @@ async function boot() {
   setupLiveMatchStatus(content);
   setupSquadWikiJoin(content);
   setupReservePurchase(content);
+  setupStudentBenefit(content);
 }
 
 boot();

@@ -50,11 +50,11 @@ Squad Wiki: https://www.squad.wiki/#servers
 
 ## 当前对局自动更新
 
-当前版本默认使用第二种方案：从 Squad Wiki 公开服务器列表读取狼群服务器，再生成同目录的 `public-status.json`。前端读取同源文件，不会遇到 GitHub Pages 跨域限制，也不会暴露 RCON 密码。
+当前版本默认优先读取 Cloudflare Worker 的 `match.statusProxyUrl`。新版 Worker 会从 SquadBrowser 公开列表读取狼群服务器，返回地图、模式、阵营、在线人数和排队人数；如果 Worker 暂时不可用，前端会退回读取同目录的 `public-status.json`。
 
-上传到 GitHub 后，到仓库的 `Actions` 页面打开工作流权限，然后手动运行一次 `Update public Squad status`。之后 GitHub 会每 5 分钟自动检查一次；只有地图、人数、队列等内容变化时才会提交更新。
+`public-status.json` 也已经改为从 SquadBrowser 生成。上传到 GitHub 后，到仓库的 `Actions` 页面打开工作流权限，然后手动运行一次 `Update public Squad status`。之后 GitHub 会每 5 分钟自动检查一次；只有地图、人数、队列等内容变化时才会提交更新。
 
-如果你以后有 Cloudflare Worker 或自己的 HTTPS 状态接口，可以把接口地址填到后台的“RCON 状态接口地址”或 `content.json` 的 `match.statusProxyUrl`，前端会优先读这个接口，失败后再读 `public-status.json`。
+如果你修改了 `workers/squad-wiki-join-worker.js`，需要把这个文件里的代码同步粘贴到 Cloudflare Worker 并部署。只上传 GitHub Pages 文件不会自动更新 Worker。
 
 ## 可选 RCON 状态接口
 
