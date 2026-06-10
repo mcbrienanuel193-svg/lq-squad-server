@@ -1,17 +1,17 @@
 {
   "ok": true,
   "source": "SquadBrowser 公开列表",
-  "generatedAt": "2026-06-10T04:56:28.964Z",
+  "generatedAt": "2026-06-10T21:23:20.164Z",
   "server": {
     "serverName": "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩",
     "squadBrowserId": "LICENSED-1003701",
     "sessionId": "9c93a53f7ac94858a09dfa326cbd7bb2",
     "address": "202.189.10.33:32368",
-    "map": "Mutaha_Invasion_v1",
+    "map": "Sanxian_Invasion_v2",
     "gameMode": "Invasion",
-    "factionA": "CAF_LO_CombinedArms",
-    "factionB": "RGF_LD_Mechanized",
-    "playerCount": 3,
+    "factionA": "PLANMC_LO_AmphibiousAssault",
+    "factionB": "TLF_LD_Armored",
+    "playerCount": 0,
     "maxPlayers": 98,
     "queueCount": 0,
     "source": "SquadBrowser"
@@ -24,8 +24,8 @@
       "page": 1,
       "limit": 30,
       "totalPages": 1,
-      "totalPlayers": 3,
-      "totalSteamHours": 1285
+      "totalPlayers": 0,
+      "totalSteamHours": 0
     }
   }
 }
