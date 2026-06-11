@@ -1,31 +1,27 @@
 {
   "ok": true,
-  "source": "SquadBrowser 公开列表",
-  "generatedAt": "2026-06-10T21:23:20.164Z",
+  "source": "BattleMetrics 公开 API",
+  "generatedAt": "2026-06-11T08:12:30.171Z",
   "server": {
     "serverName": "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩",
-    "squadBrowserId": "LICENSED-1003701",
+    "battleMetricsId": "39205368",
     "sessionId": "9c93a53f7ac94858a09dfa326cbd7bb2",
     "address": "202.189.10.33:32368",
-    "map": "Sanxian_Invasion_v2",
+    "map": "Tallil_Invasion_v1",
     "gameMode": "Invasion",
-    "factionA": "PLANMC_LO_AmphibiousAssault",
-    "factionB": "TLF_LD_Armored",
-    "playerCount": 0,
+    "factionA": "CAF_LO_Mechanized",
+    "factionB": "USA_LD_Motorized",
+    "playerCount": 97,
     "maxPlayers": 98,
-    "queueCount": 0,
-    "source": "SquadBrowser"
+    "queueCount": 6,
+    "nextLayer": "Tallil Outskirts Invasion v1",
+    "updatedAt": "2026-06-11T08:09:42.955Z",
+    "status": "online",
+    "source": "BattleMetrics"
   },
   "cache": {
-    "source": "SquadBrowser",
-    "page": 1,
-    "meta": {
-      "total": 1,
-      "page": 1,
-      "limit": 30,
-      "totalPages": 1,
-      "totalPlayers": 0,
-      "totalSteamHours": 0
-    }
+    "source": "BattleMetrics",
+    "battleMetricsId": "39205368",
+    "updatedAt": "2026-06-11T08:09:42.955Z"
   }
 }

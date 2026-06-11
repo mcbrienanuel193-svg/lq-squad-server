@@ -2,8 +2,10 @@ const SQUAD_WIKI_JOIN_URL = "https://www.squad.wiki/servers.php?action=join";
 const SQUAD_WIKI_LIST_URL = "https://www.squad.wiki/servers.php?action=list";
 const SQUADBROWSER_URL = "https://squadbrowser.app/";
 const SQUADBROWSER_GET_SERVERS_ACTION = "404764fc6fe0bbc56e2d4039d07a94500291305ba6";
+const BATTLEMETRICS_API_URL = "https://api.battlemetrics.com/servers";
 
 const DEFAULT_SERVER_ID = "9c93a53f7ac94858a09dfa326cbd7bb2";
+const DEFAULT_BATTLEMETRICS_SERVER_ID = "39205368";
 const DEFAULT_SERVER_NAME =
   "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩";
 const DEFAULT_NAME_HINTS = ["狼群", "【L.Q】", "L.Q", "LQ"];
@@ -49,6 +51,7 @@ async function readPayload(request) {
 function getServerConfig(env, payload = {}) {
   return {
     serverID: payload.serverID || env.SQUAD_WIKI_SESSION_ID || DEFAULT_SERVER_ID,
+    battleMetricsServerID: payload.battleMetricsServerID || env.BATTLEMETRICS_SERVER_ID || DEFAULT_BATTLEMETRICS_SERVER_ID,
     serverName: payload.serverName || env.SQUAD_WIKI_SERVER_NAME || DEFAULT_SERVER_NAME,
     squadBrowserSearch: payload.search || env.SQUADBROWSER_SEARCH || DEFAULT_SQUADBROWSER_SEARCH,
   };
@@ -213,6 +216,52 @@ async function findCurrentSquadBrowserServer(serverName, search) {
     : { server: null, cache: null };
 }
 
+function normalizeBattleMetricsServer(data) {
+  const attributes = data?.data?.attributes || data?.attributes || {};
+  const details = attributes.details || {};
+  const ip = cleanText(attributes.ip);
+  const port = asNumber(attributes.port || attributes.portQuery);
+
+  return {
+    serverName: cleanText(attributes.name),
+    battleMetricsId: cleanText(data?.data?.id || attributes.id),
+    sessionId: DEFAULT_SERVER_ID,
+    address: ip && port ? `${ip}:${port}` : "",
+    map: cleanText(details.map),
+    gameMode: cleanText(details.gameMode),
+    factionA: cleanText(details.squad_teamOne),
+    factionB: cleanText(details.squad_teamTwo),
+    playerCount: asNumber(attributes.players),
+    maxPlayers: asNumber(attributes.maxPlayers),
+    queueCount: asNumber(details.squad_publicQueue ?? details.squad_reservedQueue),
+    nextLayer: cleanText(details.squad_nextLayer),
+    updatedAt: cleanText(attributes.updatedAt),
+    status: cleanText(attributes.status),
+    source: "BattleMetrics",
+  };
+}
+
+async function findCurrentBattleMetricsServer(serverID) {
+  const response = await fetch(`${BATTLEMETRICS_API_URL}/${encodeURIComponent(serverID)}`, {
+    headers: { Accept: "application/json" },
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data?.data?.attributes) {
+    throw new Error(data?.errors?.[0]?.detail || `BattleMetrics request failed: ${response.status}`);
+  }
+
+  const server = normalizeBattleMetricsServer(data);
+  return {
+    server,
+    cache: {
+      source: "BattleMetrics",
+      battleMetricsId: serverID,
+      updatedAt: server.updatedAt || null,
+    },
+  };
+}
+
 async function createJoinLink(request, env) {
   const payload = await readPayload(request);
   const server = getServerConfig(env, payload);
@@ -241,9 +290,26 @@ async function findServer(request, env) {
   const payload = request.method === "POST" ? await readPayload(request) : {};
   const server = getServerConfig(env, payload);
   const serverID = url.searchParams.get("serverID") || server.serverID;
+  const battleMetricsServerID = url.searchParams.get("battleMetricsServerID") || server.battleMetricsServerID;
   const serverName = url.searchParams.get("serverName") || server.serverName;
   const search = url.searchParams.get("search") || server.squadBrowserSearch;
+  let battleMetricsError = "";
   let squadBrowserError = "";
+
+  try {
+    const current = await findCurrentBattleMetricsServer(battleMetricsServerID);
+    if (current.server) {
+      return jsonResponse(request, env, {
+        ok: true,
+        source: "BattleMetrics Worker",
+        generatedAt: new Date().toISOString(),
+        server: current.server,
+        cache: current.cache || null,
+      });
+    }
+  } catch (error) {
+    battleMetricsError = error instanceof Error ? error.message : String(error);
+  }
 
   try {
     const current = await findCurrentSquadBrowserServer(serverName, search);
@@ -254,6 +320,7 @@ async function findServer(request, env) {
         generatedAt: new Date().toISOString(),
         server: current.server,
         cache: current.cache || null,
+        battleMetricsError,
       });
     }
   } catch (error) {
@@ -268,6 +335,7 @@ async function findServer(request, env) {
       generatedAt: new Date().toISOString(),
       server: current.server,
       cache: current.cache || null,
+      battleMetricsError,
       squadBrowserError,
     });
   }
@@ -279,6 +347,7 @@ async function findServer(request, env) {
       ok: false,
       source: "SquadBrowser Worker",
       error: "未找到狼群服务器",
+      battleMetricsError,
       squadBrowserError,
       cache: current.cache || null,
     },

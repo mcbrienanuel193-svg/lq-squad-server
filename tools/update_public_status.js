@@ -5,8 +5,10 @@ const ROOT_DIR = path.resolve(__dirname, "..");
 const OUTPUT_FILE = path.join(ROOT_DIR, "public-status.json");
 const SQUADBROWSER_URL = "https://squadbrowser.app/";
 const SQUADBROWSER_GET_SERVERS_ACTION = "404764fc6fe0bbc56e2d4039d07a94500291305ba6";
+const BATTLEMETRICS_API_URL = "https://api.battlemetrics.com/servers";
 const WIKI_LIST_URL = "https://www.squad.wiki/servers.php";
 const TARGET_SESSION_ID = "9c93a53f7ac94858a09dfa326cbd7bb2";
+const TARGET_BATTLEMETRICS_ID = "39205368";
 const TARGET_SERVER_NAME =
   "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩";
 const NAME_HINTS = ["狼群", "【L.Q】", "L.Q", "LQ"];
@@ -123,6 +125,26 @@ async function findSquadBrowserServer() {
   return fallback || { server: null, cache: null };
 }
 
+async function findBattleMetricsServer() {
+  const response = await fetch(`${BATTLEMETRICS_API_URL}/${TARGET_BATTLEMETRICS_ID}`, {
+    headers: { Accept: "application/json" },
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data?.data?.attributes) {
+    throw new Error(data?.errors?.[0]?.detail || `BattleMetrics request failed: ${response.status}`);
+  }
+
+  return {
+    server: data,
+    cache: {
+      source: "BattleMetrics",
+      battleMetricsId: TARGET_BATTLEMETRICS_ID,
+      updatedAt: data.data.attributes.updatedAt || null,
+    },
+  };
+}
+
 async function fetchWikiServerChunk(offset, limit) {
   const url = new URL(WIKI_LIST_URL);
   url.searchParams.set("action", "list");
@@ -172,6 +194,31 @@ function normalizeServer(server, source) {
     return null;
   }
 
+  if (source === "BattleMetrics") {
+    const attributes = server?.data?.attributes || server?.attributes || {};
+    const details = attributes.details || {};
+    const ip = cleanText(attributes.ip);
+    const port = asNumber(attributes.port || attributes.portQuery);
+
+    return {
+      serverName: cleanText(attributes.name),
+      battleMetricsId: cleanText(server?.data?.id || attributes.id),
+      sessionId: TARGET_SESSION_ID,
+      address: ip && port ? `${ip}:${port}` : null,
+      map: cleanText(details.map),
+      gameMode: cleanText(details.gameMode),
+      factionA: cleanText(details.squad_teamOne),
+      factionB: cleanText(details.squad_teamTwo),
+      playerCount: asNumber(attributes.players),
+      maxPlayers: asNumber(attributes.maxPlayers),
+      queueCount: asNumber(details.squad_publicQueue ?? details.squad_reservedQueue),
+      nextLayer: cleanText(details.squad_nextLayer) || null,
+      updatedAt: cleanText(attributes.updatedAt) || null,
+      status: cleanText(attributes.status) || null,
+      source: "BattleMetrics",
+    };
+  }
+
   if (source === "SquadBrowser") {
     return {
       serverName: getServerName(server),
@@ -214,10 +261,15 @@ function readExistingStatus() {
 
 function comparableStatus(status) {
   const statusSource = String(status?.server?.source || status?.source || "");
+  const normalizedSource = statusSource.includes("BattleMetrics")
+    ? "BattleMetrics"
+    : statusSource.includes("SquadBrowser")
+      ? "SquadBrowser"
+      : "Squad Wiki";
   return JSON.stringify({
     ok: Boolean(status && status.ok),
     error: cleanText(status && status.error),
-    server: status && status.server ? normalizeServer(status.server, statusSource.includes("SquadBrowser") ? "SquadBrowser" : "Squad Wiki") : null,
+    server: status && status.server ? normalizeServer(status.server, normalizedSource) : null,
   });
 }
 
@@ -235,11 +287,24 @@ function writeStatus(nextStatus) {
 async function main() {
   const generatedAt = new Date().toISOString();
   let current = null;
-  let source = "SquadBrowser";
+  let source = "BattleMetrics";
+  let battleMetricsError = "";
   let squadBrowserError = "";
 
   try {
-    current = await findSquadBrowserServer();
+    current = await findBattleMetricsServer();
+  } catch (error) {
+    battleMetricsError = error instanceof Error ? error.message : String(error);
+  }
+
+  if (!current?.server) {
+    source = "SquadBrowser";
+  }
+
+  try {
+    if (!current?.server) {
+      current = await findSquadBrowserServer();
+    }
   } catch (error) {
     squadBrowserError = error instanceof Error ? error.message : String(error);
   }
@@ -255,6 +320,7 @@ async function main() {
       source,
       generatedAt,
       error: "未在公开服务器列表中找到狼群服务器",
+      battleMetricsError,
       squadBrowserError,
       server: null,
       cache: current.cache || null,
@@ -263,13 +329,22 @@ async function main() {
     return;
   }
 
-  const server = normalizeServer(current.server, source === "SquadBrowser" ? "SquadBrowser" : "Squad Wiki");
+  const server = normalizeServer(
+    current.server,
+    source === "BattleMetrics" ? "BattleMetrics" : source === "SquadBrowser" ? "SquadBrowser" : "Squad Wiki",
+  );
   writeStatus({
     ok: true,
-    source: source === "SquadBrowser" ? "SquadBrowser 公开列表" : "Squad Wiki fallback",
+    source:
+      source === "BattleMetrics"
+        ? "BattleMetrics 公开 API"
+        : source === "SquadBrowser"
+          ? "SquadBrowser 公开列表"
+          : "Squad Wiki fallback",
     generatedAt,
     server,
     cache: current.cache || null,
+    battleMetricsError: battleMetricsError || undefined,
     squadBrowserError: squadBrowserError || undefined,
   });
 

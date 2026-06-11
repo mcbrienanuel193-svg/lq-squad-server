@@ -14,7 +14,7 @@
     "factionB": "同步中",
     "players": "同步中",
     "queue": "同步中",
-    "summary": "当前公开战局进行中，进服前请先确认服务器规则并遵守管理要求，保持公平对局和团队协作",
+    "summary": "当前公开战局进行中，进服前请先确认服务器规则并遵守管理要求，保持公平对局和团队协作。",
     "joinUrl": "./join.html",
     "reserveUrl": "https://www.fyfaka.com/shop/langqunzsxd",
     "cdkUrl": "https://sq.przsc.cn/cdk_activate.php",
@@ -26,7 +26,7 @@
     "statusProxyUrl": "https://lq-squad-status.mcbrienanuel193.workers.dev/",
     "publicStatusUrl": "./public-status.json",
     "publicListUrl": "",
-    "joinNote": "当前对局来自 Cloudflare Worker 实时读取的 SquadBrowser 公开服务器列表，进服仍跳转 Squad Wiki"
+    "joinNote": "当前对局来自 BattleMetrics 精确服务器 ID 实时读取，进服仍跳转 Squad Wiki。"
   },
   "rules": {
     "intro": "进入狼群 L.Q 服务器前，请先确认并遵守以下规则。管理员会根据现场情况进行提醒、警告、踢出或封禁处理。",
@@ -92,7 +92,7 @@
       "tag": "招募",
       "date": "2026-06-06",
       "title": "载具组与侦察组补位招募",
-      "body": "优先招收能稳定参加训练、愿意服从安排的玩家，审核通过后进入试训",
+      "body": "优先招收能稳定参加训练、愿意服从岗位安排的玩家，审核通过后进入试训",
       "pinned": false
     }
   ],
@@ -103,14 +103,9 @@
       "note": "服务器续费支持"
     },
     {
-      "type": "服务器赞助",
-      "name": "老陆负重前行",
-      "note": "服务器维护支持"
-    },
-    {
-      "type": "服务器赞助",
-      "name": "一段培根",
-      "note": "服务器维护支持"
+      "type": "活动赞助",
+      "name": "一叁三",
+      "note": "活动支持"
     }
   ]
 }

@@ -26,7 +26,7 @@ const defaultContent = {
     statusProxyUrl: "https://lq-squad-status.mcbrienanuel193.workers.dev/",
     publicStatusUrl: "./public-status.json",
     publicListUrl: "",
-    joinNote: "当前对局来自 Cloudflare Worker 实时读取的 SquadBrowser 公开服务器列表，进服仍跳转 Squad Wiki。",
+    joinNote: "当前对局来自 BattleMetrics 精确服务器 ID 实时读取，进服仍跳转 Squad Wiki。",
   },
   rules: {
     intro: "进入狼群 L.Q 服务器前，请先确认并遵守以下规则。管理员会根据现场情况进行提醒、警告、踢出或封禁处理。",
@@ -440,9 +440,12 @@ function normalizePublicStatusPayload(data, match) {
   });
 }
 
-function isLegacySquadWikiWorker(data, server) {
+function isOutdatedStatusWorker(data, server) {
   const sourceText = `${cleanText(data?.source)} ${cleanText(server?.source)}`;
-  return /Squad Wiki Worker/i.test(sourceText);
+  if (/Squad Wiki Worker/i.test(sourceText)) {
+    return true;
+  }
+  return /SquadBrowser Worker/i.test(sourceText) && !data?.battleMetricsError;
 }
 
 function addMatchQueryParams(url, match) {
@@ -539,7 +542,7 @@ async function refreshLiveMatchStatus(match) {
   ].filter((source) => source.url);
 
   setMatchLoadingState();
-  setLiveMatchStatus("正在同步 SquadBrowser 实时对局...", "busy");
+  setLiveMatchStatus("正在同步 BattleMetrics 实时对局...", "busy");
 
   for (const source of sources) {
     try {
@@ -560,7 +563,7 @@ async function refreshLiveMatchStatus(match) {
       if (!server) {
         throw new Error("实时状态格式不正确");
       }
-      if (source.type === "status" && isLegacySquadWikiWorker(data, server)) {
+      if (source.type === "status" && isOutdatedStatusWorker(data, server)) {
         throw new Error("旧版 Worker 数据源已跳过");
       }
 
