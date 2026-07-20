@@ -1,27 +1,26 @@
 {
   "ok": true,
-  "source": "BattleMetrics 公开 API",
-  "generatedAt": "2026-06-11T08:12:30.171Z",
+  "source": "Squad Wiki fallback",
+  "generatedAt": "2026-07-20T21:14:28.896Z",
   "server": {
+    "sessionId": "91339893b89947cb9eb50202afbd73d4",
     "serverName": "【L.Q】狼群#1 =萌新通宵侵攻= 龟壳服务器-免费击杀提示 诚招OP 带队送积分 真实列表人数 kook:50717753 QQ群:907522575 欢迎游玩",
-    "battleMetricsId": "39205368",
-    "sessionId": "9c93a53f7ac94858a09dfa326cbd7bb2",
-    "address": "202.189.10.33:32368",
-    "map": "Tallil_Invasion_v1",
+    "map": "Gorodok_Invasion_v2",
     "gameMode": "Invasion",
-    "factionA": "RGF_LO_Motorized",
-    "factionB": "BAF_LD_Support",
-    "playerCount": 0,
-    "maxPlayers": 98,
-    "queueCount": 0,
-    "nextLayer": "Narva Invasion v2",
-    "updatedAt": "2026-07-03T03:12:33.544Z",
-    "status": "removed",
-    "source": "BattleMetrics"
+    "playerCount": 98,
+    "maxPlayers": null,
+    "queueCount": 6,
+    "isLicensed": true,
+    "isCoop": false,
+    "region": "ap-east-1",
+    "source": "Squad Wiki fallback"
   },
   "cache": {
-    "source": "BattleMetrics",
-    "battleMetricsId": "39205368",
-    "updatedAt": "2026-06-11T08:09:42.955Z"
-  }
+    "updatedAt": "2026-06-25T15:15:09Z",
+    "size": 805,
+    "ageSeconds": 2181561,
+    "cacheReady": true
+  },
+  "battleMetricsError": "Access denied. A subscription is required to use the API.",
+  "squadBrowserError": "SquadBrowser request failed: 404"
 }
