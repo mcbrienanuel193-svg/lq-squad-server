@@ -22,5 +22,5 @@
     "cacheReady": true
   },
   "battleMetricsError": "Access denied. A subscription is required to use the API.",
-  "squadBrowserError": "SquadBrowser request failed: 404"
+  "squadBrowserError": "fetch failed"
 }
